@@ -193,15 +193,45 @@
             <label class="text-[11px] font-medium text-gray-400">Aspect Ratio</label>
             <select id="aspectRatioSelect" class="w-full bg-gray-800 text-gray-200 text-xs px-2 py-1.5 rounded border border-gray-700">
               <option value="auto">Auto / Fits Content</option>
-              <option value="1:1">1:1 - Square</option>
-              <option value="16:9">16:9 - Landscape</option>
-              <option value="9:16">9:16 - Portrait</option>
-              <option value="4:3">4:3 - Standard</option>
-              <option value="3:2">3:2 - Classic</option>
+              <option value="1:1">1:1 Square</option>
+              <option value="16:9">16:9 Landscape</option>
+              <option value="9:16">9:16 Portrait</option>
+              <option value="4:3">4:3 Standard</option>
+              <option value="3:2">3:2 Classic</option>
             </select>
           </div>
 
-          <div class="grid grid-cols-2 gap-2">
+          <!-- Highlight Syntax Section -->
+          <div class="space-y-2 pt-2 border-t border-gray-800">
+            <label class="flex items-center justify-between cursor-pointer text-[11px] text-gray-300 font-medium">
+              <span class="flex items-center gap-1.5">
+                <i class="fa-solid fa-code text-blue-400 text-xs"></i>
+                <span>Highlight Syntax</span>
+              </span>
+              <input type="checkbox" id="syntaxHightlightToggle" class="rounded bg-gray-800 border-gray-700 text-blue-500 focus:ring-0" />
+            </label>
+
+            <div id="codeColorsContainer" class="hidden grid grid-cols-2 gap-2 pt-1">
+              <div class="space-y-1">
+                <label class="text-[10px] text-gray-400">Keywords</label>
+                <input type="color" id="kwColorPicker" value="#ff79c6" class="w-full h-6 rounded cursor-pointer border-0 bg-gray-800 p-0.5" />
+              </div>
+              <div class="space-y-1">
+                <label class="text-[10px] text-gray-400">Strings</label>
+                <input type="color" id="strColorPicker" value="#f1fa8c" class="w-full h-6 rounded cursor-pointer border-0 bg-gray-800 p-0.5" />
+              </div>
+              <div class="space-y-1">
+                <label class="text-[10px] text-gray-400">Comments</label>
+                <input type="color" id="cmtColorPicker" value="#6272a4" class="w-full h-6 rounded cursor-pointer border-0 bg-gray-800 p-0.5" />
+              </div>
+              <div class="space-y-1">
+                <label class="text-[10px] text-gray-400">Functions/Nums</label>
+                <input type="color" id="fnColorPicker" value="#50fa7b" class="w-full h-6 rounded cursor-pointer border-0 bg-gray-800 p-0.5" />
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 pt-2 border-t border-gray-800">
             <div class="space-y-1">
               <label class="text-[11px] font-medium text-gray-400">Background</label>
               <div class="flex items-center gap-1.5 bg-gray-800 p-1 rounded border border-gray-700">
@@ -245,7 +275,7 @@
           <div class="space-y-2 pt-2 border-t border-gray-800">
             <label class="flex items-center gap-2 cursor-pointer text-[11px] text-gray-300 font-medium">
               <input type="checkbox" id="headerToggle" class="rounded bg-gray-800 border-gray-700 text-blue-500 focus:ring-0" />
-              <span>Enable Custom Header</span>
+              <span>Header</span>
             </label>
             <input type="text" id="headerTextInput" disabled placeholder="Header text..." class="w-full bg-gray-800 text-gray-200 text-xs px-2 py-1.5 rounded border border-gray-700 disabled:opacity-40 focus:outline-none focus:border-blue-500" />
           </div>
@@ -277,8 +307,23 @@
         headerText: "",
         loadedImage: null,
         renderPending: false,
-        currentBlobSize: 0
+        currentBlobSize: 0,
+        isSyntaxHightlight: false,
+        codeTheme: {
+          keyword: '#ff79c6',
+          string: '#f1fa8c',
+          comment: '#6272a4',
+          fnNum: '#50fa7b'
+        }
       };
+
+      const KEYWORDS = new Set([
+        'const', 'let', 'var', 'function', 'return', 'if', 'else', 'for', 'while', 'do',
+        'switch', 'case', 'break', 'continue', 'import', 'export', 'default', 'class',
+        'extends', 'new', 'this', 'async', 'await', 'try', 'catch', 'throw', 'typeof',
+        'instanceof', 'void', 'public', 'private', 'protected', 'static', 'val', 'fun',
+        'package', 'import', 'struct', 'enum', 'interface', 'implements', 'def', 'print'
+      ]);
 
       const $ = (id) => document.getElementById(id);
       const els = {
@@ -321,7 +366,13 @@
         lineHeightValue: $('lineHeightValue'),
         headerToggle: $('headerToggle'),
         headerTextInput: $('headerTextInput'),
-        resetDefaultsBtn: $('resetDefaultsBtn')
+        resetDefaultsBtn: $('resetDefaultsBtn'),
+        syntaxHightlightToggle: $('syntaxHightlightToggle'),
+        codeColorsContainer: $('codeColorsContainer'),
+        kwColorPicker: $('kwColorPicker'),
+        strColorPicker: $('strColorPicker'),
+        cmtColorPicker: $('cmtColorPicker'),
+        fnColorPicker: $('fnColorPicker')
       };
 
       const formatBytes = (bytes) => {
@@ -545,6 +596,17 @@
         scheduleRender();
       });
 
+      els.syntaxHightlightToggle.addEventListener('change', (e) => {
+        state.isSyntaxHightlight = e.target.checked;
+        els.codeColorsContainer.classList.toggle('hidden', !state.isSyntaxHightlight);
+        scheduleRender();
+      });
+
+      els.kwColorPicker.addEventListener('input', (e) => { state.codeTheme.keyword = e.target.value; scheduleRender(); });
+      els.strColorPicker.addEventListener('input', (e) => { state.codeTheme.string = e.target.value; scheduleRender(); });
+      els.cmtColorPicker.addEventListener('input', (e) => { state.codeTheme.comment = e.target.value; scheduleRender(); });
+      els.fnColorPicker.addEventListener('input', (e) => { state.codeTheme.fnNum = e.target.value; scheduleRender(); });
+
       els.targetFormatSelect.addEventListener('change', (e) => {
         state.targetFormat = e.target.value;
         scheduleRender();
@@ -562,6 +624,7 @@
         state.lineHeight = 1.5;
         state.hasHeader = false;
         state.headerText = "";
+        state.isSyntaxHightlight = false;
 
         els.resolutionSelect.value = "1";
         els.aspectRatioSelect.value = "auto";
@@ -578,6 +641,8 @@
         els.headerToggle.checked = false;
         els.headerTextInput.disabled = true;
         els.headerTextInput.value = "";
+        els.syntaxHightlightToggle.checked = false;
+        els.codeColorsContainer.classList.add('hidden');
 
         scheduleRender();
       });
@@ -682,8 +747,52 @@
 
           // Render wrapped body text
           ctx.font = `${effectiveFontSize}px monospace`;
-          const wrapWidth = canvasWidth - (baseMargin * 2);
           const currentLineSpacing = effectiveFontSize * lineSpacingFactor;
+
+          const renderTokenizedLine = (lineText, startX, startY) => {
+            if (!state.isSyntaxHightlight) {
+              ctx.fillStyle = state.textColor;
+              ctx.fillText(lineText, startX, startY);
+              return;
+            }
+
+            // Simple Lexer for Canvas Code Syntax Highlighting
+            const tokenRegex = /(\/\/[^\n]*|\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`|\b\d+\b|\b[a-zA-Z_]\w*(?=\s*\()|\b[a-zA-Z_]\w*\b|[^\s\w])/g;
+            let currentX = startX;
+            let lastIndex = 0;
+            let match;
+
+            while ((match = tokenRegex.exec(lineText)) !== null) {
+              if (match.index > lastIndex) {
+                const spaceStr = lineText.substring(lastIndex, match.index);
+                currentX += ctx.measureText(spaceStr).width;
+              }
+
+              const token = match[0];
+              if (token.startsWith('//') || token.startsWith('/*')) {
+                ctx.fillStyle = state.codeTheme.comment;
+              } else if (token.startsWith('"') || token.startsWith("'") || token.startsWith('`')) {
+                ctx.fillStyle = state.codeTheme.string;
+              } else if (KEYWORDS.has(token)) {
+                ctx.fillStyle = state.codeTheme.keyword;
+              } else if (!isNaN(token) || lineText[tokenRegex.lastIndex] === '(') {
+                ctx.fillStyle = state.codeTheme.fnNum;
+              } else {
+                ctx.fillStyle = state.textColor;
+              }
+
+              ctx.fillText(token, currentX, startY);
+              currentX += ctx.measureText(token).width;
+              lastIndex = tokenRegex.lastIndex;
+            }
+
+            if (lastIndex < lineText.length) {
+              ctx.fillStyle = state.textColor;
+              ctx.fillText(lineText.substring(lastIndex), currentX, startY);
+            }
+          };
+
+          const wrapWidth = canvasWidth - (baseMargin * 2);
 
           paragraphs.forEach(p => {
             if (!p.trim()) {
@@ -697,7 +806,7 @@
             words.forEach((word, index) => {
               const testLine = line + word + ' ';
               if (ctx.measureText(testLine).width > wrapWidth && index > 0) {
-                ctx.fillText(line, baseMargin, currentY);
+                renderTokenizedLine(line, baseMargin, currentY);
                 line = word + ' ';
                 currentY += currentLineSpacing;
               } else {
@@ -705,7 +814,7 @@
               }
             });
 
-            ctx.fillText(line, baseMargin, currentY);
+            renderTokenizedLine(line, baseMargin, currentY);
             currentY += currentLineSpacing;
           });
         }
