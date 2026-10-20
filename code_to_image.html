@@ -1,862 +1,635 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Resmorph | Text to Image Tool</title>
-  
-  <!-- Standalone Tailwind CSS & FontAwesome Icons -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-
-  <style>
-    :root {
-      --bg-dark: #090d16;
-      --panel-bg: #0d1322;
-      --border-color: #1e293b;
-      --accent-color: #38bdf8;
-    }
-
-    body {
-      background-color: var(--bg-dark);
-      color: #f8fafc;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-
-    /* Custom Scrollbar Styling */
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: #0f172a;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #334155;
-      border-radius: 3px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: #475569;
-    }
-
-    /* Range Sliders */
-    input[type="range"] {
-      accent-color: var(--accent-color);
-    }
-
-    /* Color Picker Reset */
-    input[type="color"]::-webkit-color-swatch-wrapper {
-      padding: 0;
-    }
-    input[type="color"]::-webkit-color-swatch {
-      border: none;
-      border-radius: 4px;
-    }
-
-    /* Draggable Splitter Handle */
-    #resizerDivider {
-      cursor: col-resize;
-      transition: background-color 0.15s ease;
-    }
-    #resizerDivider:hover, #resizerDivider.is-resizing {
-      background-color: #38bdf8;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Resmorph | Text to Image Tool</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<style>
+  :root { --bg-dark:#090d16; --panel-bg:#0d1322; --border-color:#1e293b; --accent-color:#38bdf8; }
+  body { background-color:var(--bg-dark); color:#f8fafc; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  .custom-scrollbar::-webkit-scrollbar { width:6px; height:6px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background:#0f172a; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background:#334155; border-radius:3px; }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover { background:#475569; }
+  input[type="range"] { accent-color:var(--accent-color); }
+  input[type="color"]::-webkit-color-swatch-wrapper { padding:0; }
+  input[type="color"]::-webkit-color-swatch { border:none; border-radius:4px; }
+  #resizerDivider { cursor:col-resize; transition:background-color .15s ease; }
+  #resizerDivider:hover, #resizerDivider.is-resizing { background-color:#38bdf8; }
+</style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden select-none">
 
-  <!-- Application Header -->
-  <header class="h-16 bg-gray-900 border-b border-gray-800 px-5 flex items-center justify-between shrink-0">
-    <div class="flex items-center gap-3">
-      <div class="w-9 h-9 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold text-xl">
-        R
-      </div>
-      <h1 class="text-lg font-bold text-gray-100 tracking-tight">Resmorph | Text to Image Tool</h1>
-    </div>
-    <div class="flex items-center gap-2">
-      <span class="text-xs px-3 py-1.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 font-semibold">
-        On-Device
-      </span>
-    </div>
-  </header>
+<header class="h-16 bg-gray-900 border-b border-gray-800 px-5 flex items-center justify-between shrink-0">
+  <div class="flex items-center gap-3">
+    <div class="w-9 h-9 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold text-xl">R</div>
+    <h1 class="text-lg font-bold text-gray-100 tracking-tight">Resmorph | Text to Image Tool</h1>
+  </div>
+  <div class="flex items-center gap-2">
+    <span class="text-xs px-3 py-1.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 font-semibold">On-Device</span>
+  </div>
+</header>
 
-  <!-- Workspace Container -->
-  <main id="workspaceContainer" class="flex-1 flex overflow-hidden p-3 gap-0">
+<main id="workspaceContainer" class="flex-1 flex overflow-hidden p-3 gap-0">
 
-    <!-- Left Panel: Source File -->
-    <section id="sourcePanel" class="flex flex-col bg-gray-900 border border-gray-800 rounded-xl overflow-hidden transition-all duration-100 min-w-[280px]" style="width: 50%;">
-      <div class="h-14 bg-black px-4 flex items-center justify-between border-b border-gray-800 shrink-0 gap-2">
+  <!-- Source panel -->
+  <section id="sourcePanel" class="flex flex-col bg-gray-900 border border-gray-800 rounded-xl overflow-hidden transition-all duration-100 min-w-[280px]" style="width:50%;">
+    <div class="h-14 bg-black px-4 flex items-center justify-between border-b border-gray-800 shrink-0 gap-2">
+      <div class="flex items-center gap-2 min-w-0">
+        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0">Source File</span>
         <div class="flex items-center gap-2 min-w-0">
-          <span class="text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0">Source File</span>
-          <div id="sourceFileBadge" class="flex items-center gap-2 min-w-0">
-            <span class="text-gray-600">|</span>
-            <span id="sourceFileName" class="text-xs font-semibold text-gray-200 font-mono truncate max-w-[140px]">--</span>
-            <span id="sourceFileSize" class="text-[11px] font-mono text-gray-400 bg-gray-800 px-2 py-0.5 rounded shrink-0">0 KB</span>
-          </div>
+          <span class="text-gray-600">|</span>
+          <span id="sourceFileName" class="text-xs font-semibold text-gray-200 font-mono truncate max-w-[140px]">--</span>
+          <span id="sourceFileSize" class="text-[11px] font-mono text-gray-400 bg-gray-800 px-2 py-0.5 rounded shrink-0">0 KB</span>
         </div>
-        
-        <div class="flex items-center gap-2 shrink-0">
-          <label for="fileUploadInput" class="cursor-pointer text-xs font-medium bg-gray-800 hover:bg-gray-700 text-gray-200 px-3 py-1.5 rounded-md border border-gray-700 flex items-center gap-2 transition">
-            <i class="fa-solid fa-folder-open text-blue-400 text-xs"></i>
-            <span>Open File</span>
-          </label>
-          <input type="file" id="fileUploadInput" class="hidden" />
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <label for="fileUploadInput" class="cursor-pointer text-xs font-medium bg-gray-800 hover:bg-gray-700 text-gray-200 px-3 py-1.5 rounded-md border border-gray-700 flex items-center gap-2 transition">
+          <i class="fa-solid fa-folder-open text-blue-400 text-xs"></i><span>Open File</span>
+        </label>
+        <input type="file" id="fileUploadInput" class="hidden" />
+        <button id="toggleCollapseBtn" class="text-xs font-medium bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-md border border-gray-700 flex items-center gap-2 transition">
+          <i id="collapseIcon" class="fa-solid fa-chevron-left text-xs"></i><span id="collapseText">Collapse</span>
+        </button>
+      </div>
+    </div>
 
-          <button id="toggleCollapseBtn" class="text-xs font-medium bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-md border border-gray-700 flex items-center gap-2 transition">
-            <i id="collapseIcon" class="fa-solid fa-chevron-left text-xs"></i>
-            <span id="collapseText">Collapse</span>
+    <div id="sourcePanelBody" class="flex-1 flex flex-col bg-black overflow-hidden relative">
+      <div id="dropZone" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center cursor-pointer border-2 border-dashed border-gray-800 hover:border-blue-500/50 transition bg-black">
+        <div class="w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center text-gray-400 mb-3">
+          <i class="fa-solid fa-file-arrow-up text-xl text-blue-400"></i>
+        </div>
+        <p class="text-sm font-medium text-gray-200">Drag &amp; drop source file here</p>
+        <p class="text-xs text-gray-500 mt-1">Supports TXT, MD, CSV, JSON, PNG, JPG, WebP</p>
+      </div>
+      <textarea id="sourceTextEditor" class="hidden w-full h-full bg-black text-gray-100 font-mono text-xs p-4 focus:outline-none resize-none custom-scrollbar border-none" placeholder="Type or paste text content here..."></textarea>
+      <div id="sourceImagePreviewContainer" class="hidden w-full h-full flex items-center justify-center p-4 bg-black overflow-auto">
+        <img id="sourceImagePreview" class="max-w-full max-h-full object-contain rounded border border-gray-800" alt="Source Preview" />
+      </div>
+    </div>
+  </section>
+
+  <div id="resizerDivider" class="w-2 mx-1 rounded bg-gray-800/60 hover:bg-blue-400/80 shrink-0 self-stretch my-auto h-full transition-colors duration-150"></div>
+
+  <!-- Output panel -->
+  <section id="convertedPanel" class="flex-1 flex flex-col bg-gray-900 border border-gray-800 rounded-xl overflow-hidden min-w-[320px]">
+    <div class="h-14 bg-black px-4 flex items-center justify-between border-b border-gray-800 shrink-0 gap-2 overflow-x-auto custom-scrollbar">
+      <div class="flex items-center gap-2 shrink-0">
+        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0">Converted File</span>
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="text-gray-600">|</span>
+          <span id="convertedFileNameDisplay" class="text-xs font-semibold text-green-400 font-mono truncate max-w-[140px]">--</span>
+          <span id="convertedFileSizeDisplay" class="text-[11px] font-mono text-gray-400 bg-gray-800 px-2 py-0.5 rounded shrink-0">0 KB</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-2.5 shrink-0">
+        <select id="targetFormatSelect" class="bg-gray-800 text-gray-200 text-xs font-medium px-2.5 py-1.5 rounded-md border border-gray-700 focus:outline-none focus:border-blue-500">
+          <option value="image/png">PNG (.png)</option>
+          <option value="image/jpeg">JPEG (.jpg)</option>
+          <option value="image/webp">WebP (.webp)</option>
+        </select>
+        <input type="text" id="outputFileNameInput" placeholder="Save as..." class="bg-gray-800 text-gray-200 text-xs font-medium px-2.5 py-1.5 rounded-md border border-gray-700 w-32 focus:outline-none focus:border-blue-500" />
+        <button id="saveFileBtn" disabled class="bg-gray-700 text-gray-400 cursor-not-allowed font-semibold text-xs px-3.5 py-1.5 rounded-md transition flex items-center gap-1.5 shadow-sm">
+          <i class="fa-solid fa-download"></i><span>Save File</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="flex-1 flex overflow-hidden">
+      <div class="flex-1 bg-black p-4 flex items-center justify-center overflow-hidden relative">
+        <div id="emptyOutputState" class="flex flex-col items-center justify-center text-center p-6 text-gray-600 select-none">
+          <i class="fa-solid fa-wand-magic-sparkles text-2xl mb-2 text-gray-700"></i>
+          <p class="text-xs font-medium text-gray-500">Converted image preview will appear here</p>
+        </div>
+        <div id="canvasContainer" class="hidden w-full h-full flex items-center justify-center overflow-hidden">
+          <canvas id="outputCanvas" class="max-w-full max-h-full object-contain rounded shadow-2xl border border-gray-800/60"></canvas>
+        </div>
+      </div>
+
+      <aside class="w-64 bg-gray-900 border-l border-gray-800 p-3 flex flex-col gap-3 overflow-y-auto custom-scrollbar shrink-0">
+        <div class="flex items-center justify-between pb-2 border-b border-gray-800">
+          <span class="text-xs font-semibold text-gray-300">Image Tweaks</span>
+          <button id="resetDefaultsBtn" title="Reset to Defaults" class="w-6 h-6 rounded hover:bg-gray-800 text-gray-400 hover:text-gray-200 flex items-center justify-center transition">
+            <i class="fa-solid fa-rotate-left text-xs"></i>
           </button>
         </div>
-      </div>
 
-      <div id="sourcePanelBody" class="flex-1 flex flex-col bg-black overflow-hidden relative">
-        <div id="dropZone" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center cursor-pointer border-2 border-dashed border-gray-800 hover:border-blue-500/50 transition bg-black">
-          <div class="w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center text-gray-400 mb-3">
-            <i class="fa-solid fa-file-arrow-up text-xl text-blue-400"></i>
-          </div>
-          <p class="text-sm font-medium text-gray-200">Drag & drop source file here</p>
-          <p class="text-xs text-gray-500 mt-1">Supports TXT, MD, CSV, JSON, PNG, JPG, WebP</p>
-        </div>
-
-        <textarea id="sourceTextEditor" class="hidden w-full h-full bg-black text-gray-100 font-mono text-xs p-4 focus:outline-none resize-none custom-scrollbar border-none" placeholder="Type or paste text content here..."></textarea>
-
-        <div id="sourceImagePreviewContainer" class="hidden w-full h-full flex items-center justify-center p-4 bg-black overflow-auto">
-          <img id="sourceImagePreview" class="max-w-full max-h-full object-contain rounded border border-gray-800" alt="Source Preview" />
-        </div>
-      </div>
-    </section>
-
-    <!-- Draggable Middle Resizer -->
-    <div id="resizerDivider" class="w-2 mx-1 rounded bg-gray-800/60 hover:bg-blue-400/80 shrink-0 self-stretch my-auto h-full transition-colors duration-150"></div>
-
-    <!-- Right Panel: Converted Output -->
-    <section id="convertedPanel" class="flex-1 flex flex-col bg-gray-900 border border-gray-800 rounded-xl overflow-hidden min-w-[320px]">
-      <div class="h-14 bg-black px-4 flex items-center justify-between border-b border-gray-800 shrink-0 gap-2 overflow-x-auto custom-scrollbar">
-        <div class="flex items-center gap-2 shrink-0">
-          <span class="text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0">Converted File</span>
-          <div id="convertedFileBadge" class="flex items-center gap-2 min-w-0">
-            <span class="text-gray-600">|</span>
-            <span id="convertedFileNameDisplay" class="text-xs font-semibold text-green-400 font-mono truncate max-w-[140px]">--</span>
-            <span id="convertedFileSizeDisplay" class="text-[11px] font-mono text-gray-400 bg-gray-800 px-2 py-0.5 rounded shrink-0">0 KB</span>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2.5 shrink-0">
-          <select id="targetFormatSelect" class="bg-gray-800 text-gray-200 text-xs font-medium px-2.5 py-1.5 rounded-md border border-gray-700 focus:outline-none focus:border-blue-500">
-            <option value="image/png">PNG (.png)</option>
-            <option value="image/jpeg">JPEG (.jpg)</option>
-            <option value="image/webp">WebP (.webp)</option>
+        <div class="space-y-1">
+          <label class="text-[11px] font-medium text-gray-400">Resolution Multiplier</label>
+          <select id="resolutionSelect" class="w-full bg-gray-800 text-gray-200 text-xs px-2 py-1.5 rounded border border-gray-700">
+            <option value="1">1x Standard</option>
+            <option value="2">2x HD</option>
+            <option value="4">4x Ultra HD</option>
           </select>
-
-          <input type="text" id="outputFileNameInput" placeholder="Save as..." class="bg-gray-800 text-gray-200 text-xs font-medium px-2.5 py-1.5 rounded-md border border-gray-700 w-32 focus:outline-none focus:border-blue-500" />
-
-          <button id="saveFileBtn" disabled class="bg-gray-700 text-gray-400 cursor-not-allowed font-semibold text-xs px-3.5 py-1.5 rounded-md transition flex items-center gap-1.5 shadow-sm">
-            <i class="fa-solid fa-download"></i>
-            <span>Save File</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="flex-1 flex overflow-hidden">
-        <div id="canvasStage" class="flex-1 bg-black p-4 flex items-center justify-center overflow-hidden relative">
-          <!-- Empty State Indicator -->
-          <div id="emptyOutputState" class="flex flex-col items-center justify-center text-center p-6 text-gray-600 select-none">
-            <i class="fa-solid fa-wand-magic-sparkles text-2xl mb-2 text-gray-700"></i>
-            <p class="text-xs font-medium text-gray-500">Converted image preview will appear here</p>
-          </div>
-
-          <!-- Canvas Container -->
-          <div id="canvasContainer" class="hidden w-full h-full flex items-center justify-center overflow-hidden">
-            <canvas id="outputCanvas" class="max-w-full max-h-full object-contain rounded shadow-2xl border border-gray-800/60"></canvas>
-          </div>
         </div>
 
-        <!-- Formatting Controls Sidebar -->
-        <aside id="controlsSidebar" class="w-64 bg-gray-900 border-l border-gray-800 p-3 flex flex-col gap-3 overflow-y-auto custom-scrollbar shrink-0">
-          <div class="flex items-center justify-between pb-2 border-b border-gray-800">
-            <span class="text-xs font-semibold text-gray-300">Image Tweaks</span>
-            <button id="resetDefaultsBtn" title="Reset to Defaults" class="w-6 h-6 rounded hover:bg-gray-800 text-gray-400 hover:text-gray-200 flex items-center justify-center transition">
-              <i class="fa-solid fa-rotate-left text-xs"></i>
-            </button>
-          </div>
+        <div class="space-y-1">
+          <label class="text-[11px] font-medium text-gray-400">Aspect Ratio</label>
+          <select id="aspectRatioSelect" class="w-full bg-gray-800 text-gray-200 text-xs px-2 py-1.5 rounded border border-gray-700">
+            <option value="auto">Auto / Fits Content</option>
+            <option value="1:1">1:1 Square</option>
+            <option value="16:9">16:9 Landscape</option>
+            <option value="9:16">9:16 Portrait</option>
+            <option value="4:3">4:3 Standard</option>
+            <option value="3:2">3:2 Classic</option>
+          </select>
+        </div>
 
+        <div class="space-y-2 pt-2 border-t border-gray-800">
+          <label class="flex items-center justify-between cursor-pointer text-[11px] text-gray-300 font-medium">
+            <span class="flex items-center gap-1.5"><i class="fa-solid fa-code text-blue-400 text-xs"></i><span>Highlight Syntax</span></span>
+            <input type="checkbox" id="syntaxToggle" class="rounded bg-gray-800 border-gray-700 text-blue-500 focus:ring-0" />
+          </label>
+          <div id="codeColorsContainer" class="hidden grid grid-cols-2 gap-2 pt-1">
+            <div class="space-y-1"><label class="text-[10px] text-gray-400">Keywords</label>
+              <input type="color" id="kwColorPicker" value="#ff79c6" class="w-full h-6 rounded cursor-pointer border-0 bg-gray-800 p-0.5" /></div>
+            <div class="space-y-1"><label class="text-[10px] text-gray-400">Strings</label>
+              <input type="color" id="strColorPicker" value="#f1fa8c" class="w-full h-6 rounded cursor-pointer border-0 bg-gray-800 p-0.5" /></div>
+            <div class="space-y-1"><label class="text-[10px] text-gray-400">Comments</label>
+              <input type="color" id="cmtColorPicker" value="#6272a4" class="w-full h-6 rounded cursor-pointer border-0 bg-gray-800 p-0.5" /></div>
+            <div class="space-y-1"><label class="text-[10px] text-gray-400">Functions/Nums</label>
+              <input type="color" id="fnColorPicker" value="#50fa7b" class="w-full h-6 rounded cursor-pointer border-0 bg-gray-800 p-0.5" /></div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 pt-2 border-t border-gray-800">
           <div class="space-y-1">
-            <label class="text-[11px] font-medium text-gray-400">Resolution Multiplier</label>
-            <select id="resolutionSelect" class="w-full bg-gray-800 text-gray-200 text-xs px-2 py-1.5 rounded border border-gray-700">
-              <option value="1">1x Standard</option>
-              <option value="2">2x HD</option>
-              <option value="4">4x Ultra HD</option>
-            </select>
+            <label class="text-[11px] font-medium text-gray-400">Background</label>
+            <div class="flex items-center gap-1.5 bg-gray-800 p-1 rounded border border-gray-700">
+              <input type="color" id="bgColorPicker" value="#000000" class="w-5 h-5 rounded cursor-pointer border-0 bg-transparent" />
+              <span id="bgColorHex" class="text-[10px] text-gray-300 font-mono">#000000</span>
+            </div>
           </div>
-
           <div class="space-y-1">
-            <label class="text-[11px] font-medium text-gray-400">Aspect Ratio</label>
-            <select id="aspectRatioSelect" class="w-full bg-gray-800 text-gray-200 text-xs px-2 py-1.5 rounded border border-gray-700">
-              <option value="auto">Auto / Fits Content</option>
-              <option value="1:1">1:1 Square</option>
-              <option value="16:9">16:9 Landscape</option>
-              <option value="9:16">9:16 Portrait</option>
-              <option value="4:3">4:3 Standard</option>
-              <option value="3:2">3:2 Classic</option>
-            </select>
-          </div>
-
-          <!-- Highlight Syntax Section -->
-          <div class="space-y-2 pt-2 border-t border-gray-800">
-            <label class="flex items-center justify-between cursor-pointer text-[11px] text-gray-300 font-medium">
-              <span class="flex items-center gap-1.5">
-                <i class="fa-solid fa-code text-blue-400 text-xs"></i>
-                <span>Highlight Syntax</span>
-              </span>
-              <input type="checkbox" id="syntaxHightlightToggle" class="rounded bg-gray-800 border-gray-700 text-blue-500 focus:ring-0" />
-            </label>
-
-            <div id="codeColorsContainer" class="hidden grid grid-cols-2 gap-2 pt-1">
-              <div class="space-y-1">
-                <label class="text-[10px] text-gray-400">Keywords</label>
-                <input type="color" id="kwColorPicker" value="#ff79c6" class="w-full h-6 rounded cursor-pointer border-0 bg-gray-800 p-0.5" />
-              </div>
-              <div class="space-y-1">
-                <label class="text-[10px] text-gray-400">Strings</label>
-                <input type="color" id="strColorPicker" value="#f1fa8c" class="w-full h-6 rounded cursor-pointer border-0 bg-gray-800 p-0.5" />
-              </div>
-              <div class="space-y-1">
-                <label class="text-[10px] text-gray-400">Comments</label>
-                <input type="color" id="cmtColorPicker" value="#6272a4" class="w-full h-6 rounded cursor-pointer border-0 bg-gray-800 p-0.5" />
-              </div>
-              <div class="space-y-1">
-                <label class="text-[10px] text-gray-400">Functions/Nums</label>
-                <input type="color" id="fnColorPicker" value="#50fa7b" class="w-full h-6 rounded cursor-pointer border-0 bg-gray-800 p-0.5" />
-              </div>
+            <label class="text-[11px] font-medium text-gray-400">Text Color</label>
+            <div class="flex items-center gap-1.5 bg-gray-800 p-1 rounded border border-gray-700">
+              <input type="color" id="textColorPicker" value="#ffffff" class="w-5 h-5 rounded cursor-pointer border-0 bg-transparent" />
+              <span id="textColorHex" class="text-[10px] text-gray-300 font-mono">#ffffff</span>
             </div>
           </div>
+        </div>
 
-          <div class="grid grid-cols-2 gap-2 pt-2 border-t border-gray-800">
-            <div class="space-y-1">
-              <label class="text-[11px] font-medium text-gray-400">Background</label>
-              <div class="flex items-center gap-1.5 bg-gray-800 p-1 rounded border border-gray-700">
-                <input type="color" id="bgColorPicker" value="#000000" class="w-5 h-5 rounded cursor-pointer border-0 bg-transparent" />
-                <span id="bgColorHex" class="text-[10px] text-gray-300 font-mono">#000000</span>
-              </div>
-            </div>
-            <div class="space-y-1">
-              <label class="text-[11px] font-medium text-gray-400">Text Color</label>
-              <div class="flex items-center gap-1.5 bg-gray-800 p-1 rounded border border-gray-700">
-                <input type="color" id="textColorPicker" value="#ffffff" class="w-5 h-5 rounded cursor-pointer border-0 bg-transparent" />
-                <span id="textColorHex" class="text-[10px] text-gray-300 font-mono">#ffffff</span>
-              </div>
-            </div>
+        <div class="space-y-1">
+          <div class="flex justify-between items-center text-[11px]">
+            <label class="font-medium text-gray-400">Font Size</label>
+            <span id="fontSizeValue" class="text-gray-300 font-mono">12px</span>
           </div>
+          <input type="range" id="fontSizeSlider" min="8" max="72" value="12" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
+        </div>
 
-          <div class="space-y-1">
-            <div class="flex justify-between items-center text-[11px]">
-              <label class="font-medium text-gray-400">Font Size</label>
-              <span id="fontSizeValue" class="text-gray-300 font-mono">12px</span>
-            </div>
-            <input type="range" id="fontSizeSlider" min="8" max="72" value="12" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
+        <div class="space-y-1">
+          <div class="flex justify-between items-center text-[11px]">
+            <label class="font-medium text-gray-400">Text Margin</label>
+            <span id="marginValue" class="text-gray-300 font-mono">24px</span>
           </div>
+          <input type="range" id="marginSlider" min="0" max="100" value="24" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
+        </div>
 
-          <div class="space-y-1">
-            <div class="flex justify-between items-center text-[11px]">
-              <label class="font-medium text-gray-400">Text Margin</label>
-              <span id="marginValue" class="text-gray-300 font-mono">24px</span>
-            </div>
-            <input type="range" id="marginSlider" min="0" max="100" value="24" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
+        <div class="space-y-1">
+          <div class="flex justify-between items-center text-[11px]">
+            <label class="font-medium text-gray-400">Line Spacing</label>
+            <span id="lineHeightValue" class="text-gray-300 font-mono">1.5x</span>
           </div>
-
-          <div class="space-y-1">
-            <div class="flex justify-between items-center text-[11px]">
-              <label class="font-medium text-gray-400">Line Spacing</label>
-              <span id="lineHeightValue" class="text-gray-300 font-mono">1.5x</span>
-            </div>
-            <input type="range" id="lineHeightSlider" min="1.0" max="3.0" step="0.1" value="1.5" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
-          </div>
-
-          <div class="space-y-2 pt-2 border-t border-gray-800">
-            <label class="flex items-center gap-2 cursor-pointer text-[11px] text-gray-300 font-medium">
-              <input type="checkbox" id="headerToggle" class="rounded bg-gray-800 border-gray-700 text-blue-500 focus:ring-0" />
-              <span>Header</span>
-            </label>
-            <input type="text" id="headerTextInput" disabled placeholder="Header text..." class="w-full bg-gray-800 text-gray-200 text-xs px-2 py-1.5 rounded border border-gray-700 disabled:opacity-40 focus:outline-none focus:border-blue-500" />
-          </div>
-        </aside>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- Application Logic -->
-  <script>
-    (() => {
-      'use strict';
-
-      const state = {
-        file: null,
-        sourceText: "",
-        hasContent: false,
-        isCollapsed: false,
-        targetFormat: "image/png",
-        scaleMultiplier: 1,
-        aspectRatio: "auto",
-        bgColor: "#000000",
-        textColor: "#ffffff",
-        fontSize: 12,
-        margin: 24,
-        lineHeight: 1.5,
-        hasHeader: false,
-        headerText: "",
-        loadedImage: null,
-        renderPending: false,
-        currentBlobSize: 0,
-        isSyntaxHightlight: false,
-        codeTheme: {
-          keyword: '#ff79c6',
-          string: '#f1fa8c',
-          comment: '#6272a4',
-          fnNum: '#50fa7b'
-        }
-      };
-
-      const KEYWORDS = new Set([
-        'const', 'let', 'var', 'function', 'return', 'if', 'else', 'for', 'while', 'do',
-        'switch', 'case', 'break', 'continue', 'import', 'export', 'default', 'class',
-        'extends', 'new', 'this', 'async', 'await', 'try', 'catch', 'throw', 'typeof',
-        'instanceof', 'void', 'public', 'private', 'protected', 'static', 'val', 'fun',
-        'package', 'import', 'struct', 'enum', 'interface', 'implements', 'def', 'print'
-      ]);
-
-      const $ = (id) => document.getElementById(id);
-      const els = {
-        workspaceContainer: $('workspaceContainer'),
-        sourcePanel: $('sourcePanel'),
-        sourcePanelBody: $('sourcePanelBody'),
-        resizerDivider: $('resizerDivider'),
-        convertedPanel: $('convertedPanel'),
-        toggleCollapseBtn: $('toggleCollapseBtn'),
-        collapseIcon: $('collapseIcon'),
-        collapseText: $('collapseText'),
-        fileUploadInput: $('fileUploadInput'),
-        dropZone: $('dropZone'),
-        sourceFileBadge: $('sourceFileBadge'),
-        sourceFileName: $('sourceFileName'),
-        sourceFileSize: $('sourceFileSize'),
-        sourceTextEditor: $('sourceTextEditor'),
-        sourceImagePreviewContainer: $('sourceImagePreviewContainer'),
-        sourceImagePreview: $('sourceImagePreview'),
-        targetFormatSelect: $('targetFormatSelect'),
-        outputFileNameInput: $('outputFileNameInput'),
-        saveFileBtn: $('saveFileBtn'),
-        convertedFileNameDisplay: $('convertedFileNameDisplay'),
-        convertedFileSizeDisplay: $('convertedFileSizeDisplay'),
-        emptyOutputState: $('emptyOutputState'),
-        canvasContainer: $('canvasContainer'),
-        outputCanvas: $('outputCanvas'),
-        controlsSidebar: $('controlsSidebar'),
-        resolutionSelect: $('resolutionSelect'),
-        aspectRatioSelect: $('aspectRatioSelect'),
-        bgColorPicker: $('bgColorPicker'),
-        bgColorHex: $('bgColorHex'),
-        textColorPicker: $('textColorPicker'),
-        textColorHex: $('textColorHex'),
-        fontSizeSlider: $('fontSizeSlider'),
-        fontSizeValue: $('fontSizeValue'),
-        marginSlider: $('marginSlider'),
-        marginValue: $('marginValue'),
-        lineHeightSlider: $('lineHeightSlider'),
-        lineHeightValue: $('lineHeightValue'),
-        headerToggle: $('headerToggle'),
-        headerTextInput: $('headerTextInput'),
-        resetDefaultsBtn: $('resetDefaultsBtn'),
-        syntaxHightlightToggle: $('syntaxHightlightToggle'),
-        codeColorsContainer: $('codeColorsContainer'),
-        kwColorPicker: $('kwColorPicker'),
-        strColorPicker: $('strColorPicker'),
-        cmtColorPicker: $('cmtColorPicker'),
-        fnColorPicker: $('fnColorPicker')
-      };
-
-      const formatBytes = (bytes) => {
-        if (!bytes) return '0 B';
-        const k = 1024;
-        const sizes = ['B', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
-      };
-
-      const downloadBlob = (blob, filename) => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-      };
-
-      const setSaveButtonState = (enabled) => {
-        state.hasContent = enabled;
-        if (enabled) {
-          els.saveFileBtn.disabled = false;
-          els.saveFileBtn.className = "bg-blue-500 hover:bg-blue-400 active:bg-blue-600 text-black font-semibold text-xs px-3.5 py-1.5 rounded-md transition flex items-center gap-1.5 shadow-sm cursor-pointer";
-        } else {
-          els.saveFileBtn.disabled = true;
-          els.saveFileBtn.className = "bg-gray-700 text-gray-400 cursor-not-allowed font-semibold text-xs px-3.5 py-1.5 rounded-md transition flex items-center gap-1.5 shadow-sm";
-        }
-      };
-
-      const scheduleRender = () => {
-        if (state.renderPending) return;
-        state.renderPending = true;
-        requestAnimationFrame(() => {
-          renderLiveOutput();
-          state.renderPending = false;
-        });
-      };
-
-      // Middle Draggable Separator
-      let isResizing = false;
-      els.resizerDivider.addEventListener('mousedown', (e) => {
-        if (state.isCollapsed) return;
-        isResizing = true;
-        els.resizerDivider.classList.add('is-resizing');
-        document.body.style.cursor = 'col-resize';
-      });
-
-      window.addEventListener('mousemove', (e) => {
-        if (!isResizing || state.isCollapsed) return;
-        
-        const containerRect = els.workspaceContainer.getBoundingClientRect();
-        const relativeX = e.clientX - containerRect.left;
-        
-        // Stops precisely at 280px (the panel's min-w constraint)
-        const minPx = 280;
-        const maxPx = containerRect.width - 320;
-        const clampedX = Math.max(minPx, Math.min(maxPx, relativeX));
-        const percentage = (clampedX / containerRect.width) * 100;
-        
-        els.sourcePanel.style.width = `${percentage}%`;
-        scheduleRender();
-      });
-
-      window.addEventListener('mouseup', () => {
-        if (isResizing) {
-          isResizing = false;
-          els.resizerDivider.classList.remove('is-resizing');
-          document.body.style.cursor = 'default';
-          scheduleRender();
-        }
-      });
-
-      // Collapse Toggle Button
-      els.toggleCollapseBtn.addEventListener('click', () => {
-        state.isCollapsed = !state.isCollapsed;
-        els.sourcePanelBody.classList.toggle('hidden', state.isCollapsed);
-        if (state.isCollapsed) {
-          els.sourcePanel.style.width = 'auto';
-          els.sourcePanel.classList.remove('flex-1');
-          els.resizerDivider.classList.add('hidden');
-        } else {
-          els.sourcePanel.style.width = '50%';
-          els.resizerDivider.classList.remove('hidden');
-        }
-        els.collapseIcon.className = `fa-solid fa-chevron-${state.isCollapsed ? 'right' : 'left'} text-xs`;
-        els.collapseText.textContent = state.isCollapsed ? 'Expand' : 'Collapse';
-        scheduleRender();
-      });
-
-      // Drag & Drop Setup
-      els.dropZone.addEventListener('click', () => els.fileUploadInput.click());
-      els.fileUploadInput.addEventListener('change', (e) => handleFileSelect(e.target.files[0]));
-
-      ['dragover', 'dragenter'].forEach(evt => {
-        els.dropZone.addEventListener(evt, (e) => {
-          e.preventDefault();
-          els.dropZone.classList.add('border-blue-400');
-        });
-      });
-
-      ['dragleave', 'drop'].forEach(evt => {
-        els.dropZone.addEventListener(evt, (e) => {
-          e.preventDefault();
-          els.dropZone.classList.remove('border-blue-400');
-        });
-      });
-
-      els.dropZone.addEventListener('drop', (e) => {
-        if (e.dataTransfer.files.length) handleFileSelect(e.dataTransfer.files[0]);
-      });
-
-      const handleFileSelect = (file) => {
-        if (!file) return;
-        state.file = file;
-        els.dropZone.classList.add('hidden');
-        updateSourceFileInfo(file.name, file.size);
-
-        if (file.type.startsWith('image/')) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const img = new Image();
-            img.onload = () => {
-              state.loadedImage = img;
-              els.sourceImagePreview.src = e.target.result;
-              els.sourceImagePreviewContainer.classList.remove('hidden');
-              els.sourceTextEditor.classList.add('hidden');
-              setSaveButtonState(true);
-              scheduleRender();
-            };
-            img.src = e.target.result;
-          };
-          reader.readAsDataURL(file);
-        } else {
-          state.loadedImage = null;
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            state.sourceText = e.target.result;
-            els.sourceTextEditor.value = state.sourceText;
-            els.sourceTextEditor.classList.remove('hidden');
-            els.sourceImagePreviewContainer.classList.add('hidden');
-            setSaveButtonState(state.sourceText.trim().length > 0);
-            scheduleRender();
-          };
-          reader.readAsText(file);
-        }
-      };
-
-      const updateSourceFileInfo = (name, size) => {
-        els.sourceFileName.textContent = name || '--';
-        els.sourceFileSize.textContent = formatBytes(size);
-        if (name && name !== '--') {
-          const baseName = name.substring(0, name.lastIndexOf('.')) || name;
-          els.outputFileNameInput.value = baseName;
-        } else {
-          els.outputFileNameInput.value = '';
-        }
-        updateConvertedBadge();
-      };
-
-      // Customizer Listeners
-      els.sourceTextEditor.addEventListener('input', (e) => {
-        state.sourceText = e.target.value;
-        const bytes = new Blob([state.sourceText]).size;
-        if (!state.file) {
-          updateSourceFileInfo(state.sourceText.trim() ? "untitled.txt" : "--", bytes);
-          if (state.sourceText.trim()) {
-            els.dropZone.classList.add('hidden');
-            els.sourceTextEditor.classList.remove('hidden');
-          }
-        } else {
-          els.sourceFileSize.textContent = formatBytes(bytes);
-        }
-        setSaveButtonState(state.sourceText.trim().length > 0 || state.loadedImage !== null);
-        scheduleRender();
-      });
-
-      els.resolutionSelect.addEventListener('change', (e) => { state.scaleMultiplier = parseFloat(e.target.value); scheduleRender(); });
-      els.aspectRatioSelect.addEventListener('change', (e) => { state.aspectRatio = e.target.value; scheduleRender(); });
-      
-      els.bgColorPicker.addEventListener('input', (e) => { 
-        state.bgColor = e.target.value; 
-        els.bgColorHex.textContent = state.bgColor; 
-        scheduleRender(); 
-      });
-
-      els.textColorPicker.addEventListener('input', (e) => { 
-        state.textColor = e.target.value; 
-        els.textColorHex.textContent = state.textColor; 
-        scheduleRender(); 
-      });
-
-      els.fontSizeSlider.addEventListener('input', (e) => {
-        state.fontSize = parseInt(e.target.value, 10);
-        els.fontSizeValue.textContent = `${state.fontSize}px`;
-        scheduleRender();
-      });
-
-      els.marginSlider.addEventListener('input', (e) => {
-        state.margin = parseInt(e.target.value, 10);
-        els.marginValue.textContent = `${state.margin}px`;
-        scheduleRender();
-      });
-
-      els.lineHeightSlider.addEventListener('input', (e) => {
-        state.lineHeight = parseFloat(e.target.value);
-        els.lineHeightValue.textContent = `${state.lineHeight}x`;
-        scheduleRender();
-      });
-
-      els.headerToggle.addEventListener('change', (e) => {
-        state.hasHeader = e.target.checked;
-        els.headerTextInput.disabled = !state.hasHeader;
-        scheduleRender();
-      });
-
-      els.headerTextInput.addEventListener('input', (e) => {
-        state.headerText = e.target.value;
-        scheduleRender();
-      });
-
-      els.syntaxHightlightToggle.addEventListener('change', (e) => {
-        state.isSyntaxHightlight = e.target.checked;
-        els.codeColorsContainer.classList.toggle('hidden', !state.isSyntaxHightlight);
-        scheduleRender();
-      });
-
-      els.kwColorPicker.addEventListener('input', (e) => { state.codeTheme.keyword = e.target.value; scheduleRender(); });
-      els.strColorPicker.addEventListener('input', (e) => { state.codeTheme.string = e.target.value; scheduleRender(); });
-      els.cmtColorPicker.addEventListener('input', (e) => { state.codeTheme.comment = e.target.value; scheduleRender(); });
-      els.fnColorPicker.addEventListener('input', (e) => { state.codeTheme.fnNum = e.target.value; scheduleRender(); });
-
-      els.targetFormatSelect.addEventListener('change', (e) => {
-        state.targetFormat = e.target.value;
-        scheduleRender();
-      });
-
-      els.outputFileNameInput.addEventListener('input', () => updateConvertedBadge());
-
-      els.resetDefaultsBtn.addEventListener('click', () => {
-        state.scaleMultiplier = 1;
-        state.aspectRatio = "auto";
-        state.bgColor = "#000000";
-        state.textColor = "#ffffff";
-        state.fontSize = 12;
-        state.margin = 24;
-        state.lineHeight = 1.5;
-        state.hasHeader = false;
-        state.headerText = "";
-        state.isSyntaxHightlight = false;
-
-        els.resolutionSelect.value = "1";
-        els.aspectRatioSelect.value = "auto";
-        els.bgColorPicker.value = "#000000";
-        els.bgColorHex.textContent = "#000000";
-        els.textColorPicker.value = "#ffffff";
-        els.textColorHex.textContent = "#ffffff";
-        els.fontSizeSlider.value = 12;
-        els.fontSizeValue.textContent = "12px";
-        els.marginSlider.value = 24;
-        els.marginValue.textContent = "24px";
-        els.lineHeightSlider.value = 1.5;
-        els.lineHeightValue.textContent = "1.5x";
-        els.headerToggle.checked = false;
-        els.headerTextInput.disabled = true;
-        els.headerTextInput.value = "";
-        els.syntaxHightlightToggle.checked = false;
-        els.codeColorsContainer.classList.add('hidden');
-
-        scheduleRender();
-      });
-
-      // Auto-Fitting Dynamic Canvas Text & Image Engine
-      function renderLiveOutput() {
-        if (!state.hasContent) {
-          els.emptyOutputState.classList.remove('hidden');
-          els.canvasContainer.classList.add('hidden');
-          updateConvertedBadge(0);
-          return;
-        }
-
-        els.emptyOutputState.classList.add('hidden');
-        els.canvasContainer.classList.remove('hidden');
-
-        const ctx = els.outputCanvas.getContext('2d');
-        const scale = state.scaleMultiplier;
-        const baseMargin = state.margin * scale;
-        const lineSpacingFactor = state.lineHeight;
-
-        if (state.loadedImage) {
-          let width = state.loadedImage.width * scale;
-          let height = state.loadedImage.height * scale;
-
-          if (state.aspectRatio !== "auto") {
-            const [rw, rh] = state.aspectRatio.split(':').map(Number);
-            height = width / (rw / rh);
-          }
-
-          els.outputCanvas.width = width;
-          els.outputCanvas.height = height;
-
-          ctx.fillStyle = state.bgColor;
-          ctx.fillRect(0, 0, width, height);
-
-          const imgRatio = state.loadedImage.width / state.loadedImage.height;
-          let drawW = width;
-          let drawH = width / imgRatio;
-
-          if (drawH > height) {
-            drawH = height;
-            drawW = height * imgRatio;
-          }
-
-          ctx.drawImage(state.loadedImage, (width - drawW) / 2, (height - drawH) / 2, drawW, drawH);
-        } else {
-          // Dynamic Auto-Scaling Canvas Text Engine
-          const paragraphs = state.sourceText.split('\n');
-          let effectiveFontSize = state.fontSize * scale;
-
-          // Estimate dimensions with original font size
-          ctx.font = `${effectiveFontSize}px monospace`;
-          let maxTextWidth = 0;
-          paragraphs.forEach(p => {
-            const w = ctx.measureText(p).width;
-            if (w > maxTextWidth) maxTextWidth = w;
-          });
-
-          let canvasWidth = maxTextWidth + (baseMargin * 2);
-          let headerOffset = (state.hasHeader && state.headerText) ? (effectiveFontSize * 2) : 0;
-          let canvasHeight = (paragraphs.length * effectiveFontSize * lineSpacingFactor) + (baseMargin * 2) + headerOffset;
-
-          if (state.aspectRatio !== "auto") {
-            const [rw, rh] = state.aspectRatio.split(':').map(Number);
-            const targetRatio = rw / rh;
-            canvasWidth = Math.max(canvasWidth, 400 * scale);
-            canvasHeight = canvasWidth / targetRatio;
-
-            // Auto-adjust font size if content exceeds fixed aspect ratio height
-            const availableHeight = canvasHeight - (baseMargin * 2) - headerOffset;
-            const requiredLines = paragraphs.reduce((acc, p) => {
-              if (!p.trim()) return acc + 1;
-              const testWidth = ctx.measureText(p).width;
-              return acc + Math.ceil(testWidth / Math.max(1, canvasWidth - (baseMargin * 2)));
-            }, 0);
-
-            const maxAllowedLineHeight = availableHeight / Math.max(1, requiredLines);
-            const calculatedFontSize = maxAllowedLineHeight / lineSpacingFactor;
-
-            if (calculatedFontSize < effectiveFontSize && calculatedFontSize > 4) {
-              effectiveFontSize = calculatedFontSize;
-            }
-          }
-
-          els.outputCanvas.width = canvasWidth;
-          els.outputCanvas.height = canvasHeight;
-
-          // Render background
-          ctx.fillStyle = state.bgColor;
-          ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-
-          // Render Header
-          ctx.fillStyle = state.textColor;
-          let currentY = baseMargin + effectiveFontSize;
-
-          if (state.hasHeader && state.headerText) {
-            ctx.font = `bold ${effectiveFontSize * 1.3}px monospace`;
-            ctx.fillText(state.headerText, baseMargin, currentY);
-            currentY += effectiveFontSize * 1.8;
-          }
-
-          // Render wrapped body text
-          ctx.font = `${effectiveFontSize}px monospace`;
-          const currentLineSpacing = effectiveFontSize * lineSpacingFactor;
-
-          const renderTokenizedLine = (lineText, startX, startY) => {
-            if (!state.isSyntaxHightlight) {
-              ctx.fillStyle = state.textColor;
-              ctx.fillText(lineText, startX, startY);
-              return;
-            }
-
-            // Simple Lexer for Canvas Code Syntax Highlighting
-            const tokenRegex = /(\/\/[^\n]*|\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`|\b\d+\b|\b[a-zA-Z_]\w*(?=\s*\()|\b[a-zA-Z_]\w*\b|[^\s\w])/g;
-            let currentX = startX;
-            let lastIndex = 0;
-            let match;
-
-            while ((match = tokenRegex.exec(lineText)) !== null) {
-              if (match.index > lastIndex) {
-                const spaceStr = lineText.substring(lastIndex, match.index);
-                currentX += ctx.measureText(spaceStr).width;
-              }
-
-              const token = match[0];
-              if (token.startsWith('//') || token.startsWith('/*')) {
-                ctx.fillStyle = state.codeTheme.comment;
-              } else if (token.startsWith('"') || token.startsWith("'") || token.startsWith('`')) {
-                ctx.fillStyle = state.codeTheme.string;
-              } else if (KEYWORDS.has(token)) {
-                ctx.fillStyle = state.codeTheme.keyword;
-              } else if (!isNaN(token) || lineText[tokenRegex.lastIndex] === '(') {
-                ctx.fillStyle = state.codeTheme.fnNum;
-              } else {
-                ctx.fillStyle = state.textColor;
-              }
-
-              ctx.fillText(token, currentX, startY);
-              currentX += ctx.measureText(token).width;
-              lastIndex = tokenRegex.lastIndex;
-            }
-
-            if (lastIndex < lineText.length) {
-              ctx.fillStyle = state.textColor;
-              ctx.fillText(lineText.substring(lastIndex), currentX, startY);
-            }
-          };
-
-          const wrapWidth = canvasWidth - (baseMargin * 2);
-
-          paragraphs.forEach(p => {
-            if (!p.trim()) {
-              currentY += currentLineSpacing;
-              return;
-            }
-
-            const words = p.split(' ');
-            let line = '';
-
-            words.forEach((word, index) => {
-              const testLine = line + word + ' ';
-              if (ctx.measureText(testLine).width > wrapWidth && index > 0) {
-                renderTokenizedLine(line, baseMargin, currentY);
-                line = word + ' ';
-                currentY += currentLineSpacing;
-              } else {
-                line = testLine;
-              }
-            });
-
-            renderTokenizedLine(line, baseMargin, currentY);
-            currentY += currentLineSpacing;
-          });
-        }
-
-        els.outputCanvas.toBlob((blob) => {
-          if (blob) {
-            state.currentBlobSize = blob.size;
-            updateConvertedBadge(blob.size);
-          }
-        }, state.targetFormat);
-      }
-
-      function updateConvertedBadge(sizeBytes) {
-        if (typeof sizeBytes !== 'undefined') {
-          state.currentBlobSize = sizeBytes;
-        }
-        const ext = state.targetFormat.split('/')[1].replace('jpeg', 'jpg');
-        const baseName = els.outputFileNameInput.value.trim() || 'converted-file';
-        els.convertedFileNameDisplay.textContent = state.hasContent ? `${baseName}.${ext}` : '--';
-        els.convertedFileSizeDisplay.textContent = state.hasContent ? formatBytes(state.currentBlobSize) : '0 KB';
-      }
-
-      // Save Export Handler
-      els.saveFileBtn.addEventListener('click', () => {
-        if (!state.hasContent) return;
-        const ext = state.targetFormat.split('/')[1].replace('jpeg', 'jpg');
-        const baseName = els.outputFileNameInput.value.trim() || 'converted-file';
-        const filename = `${baseName}.${ext}`;
-
-        els.outputCanvas.toBlob((blob) => {
-          if (blob) downloadBlob(blob, filename);
-        }, state.targetFormat, 0.95);
-      });
-
-      // Window Resize Re-calculation Listener
-      window.addEventListener('resize', scheduleRender);
-
-      // Initial State Setup
-      setSaveButtonState(false);
-      updateSourceFileInfo("--", 0);
+          <input type="range" id="lineHeightSlider" min="1.0" max="3.0" step="0.1" value="1.5" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
+        </div>
+
+        <div class="space-y-2 pt-2 border-t border-gray-800">
+          <label class="flex items-center gap-2 cursor-pointer text-[11px] text-gray-300 font-medium">
+            <input type="checkbox" id="headerToggle" class="rounded bg-gray-800 border-gray-700 text-blue-500 focus:ring-0" />
+            <span>Header</span>
+          </label>
+          <input type="text" id="headerTextInput" disabled placeholder="Header text..." class="w-full bg-gray-800 text-gray-200 text-xs px-2 py-1.5 rounded border border-gray-700 disabled:opacity-40 focus:outline-none focus:border-blue-500" />
+        </div>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ---------- Constants ---------- */
+  const MONO = 'monospace';
+  const MIN_SOURCE_PX = 280;
+  const MIN_OUTPUT_PX = 320;
+  const SAVE_QUALITY = 0.95;
+  const SIZE_DEBOUNCE_MS = 120;
+
+  const SAVE_BTN_CLASS = {
+    on: 'bg-blue-500 hover:bg-blue-400 active:bg-blue-600 text-black font-semibold text-xs px-3.5 py-1.5 rounded-md transition flex items-center gap-1.5 shadow-sm cursor-pointer',
+    off: 'bg-gray-700 text-gray-400 cursor-not-allowed font-semibold text-xs px-3.5 py-1.5 rounded-md transition flex items-center gap-1.5 shadow-sm'
+  };
+
+  const KEYWORDS = new Set([
+    'const','let','var','function','return','if','else','for','while','do','switch','case','break',
+    'continue','import','export','default','class','extends','new','this','async','await','try','catch',
+    'throw','typeof','instanceof','void','public','private','protected','static','val','fun','package',
+    'struct','enum','interface','implements','def','print'
+  ]);
+
+  const TOKEN_RE = /(\/\/[^\n]*|\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`|\b\d+\b|\b[a-zA-Z_]\w*(?=\s*\()|\b[a-zA-Z_]\w*\b|[^\s\w])/g;
+
+  /* Settings restored by the reset button */
+  const DEFAULTS = Object.freeze({
+    scaleMultiplier: 1, aspectRatio: 'auto', bgColor: '#000000', textColor: '#ffffff',
+    fontSize: 12, margin: 24, lineHeight: 1.5
+  });
+
+  /* ---------- State ---------- */
+  const state = {
+    ...DEFAULTS,
+    file: null, sourceText: '', hasContent: false, isCollapsed: false,
+    targetFormat: 'image/png', hasHeader: false, headerText: '',
+    loadedImage: null, renderPending: false, currentBlobSize: 0, syntaxHighlight: false,
+    theme: { keyword: '#ff79c6', string: '#f1fa8c', comment: '#6272a4', fnNum: '#50fa7b' }
+  };
+
+  /* ---------- DOM ---------- */
+  const $ = (id) => document.getElementById(id);
+  const els = Object.fromEntries([
+    'workspaceContainer','sourcePanel','sourcePanelBody','resizerDivider','toggleCollapseBtn','collapseIcon',
+    'collapseText','fileUploadInput','dropZone','sourceFileName','sourceFileSize','sourceTextEditor',
+    'sourceImagePreviewContainer','sourceImagePreview','targetFormatSelect','outputFileNameInput','saveFileBtn',
+    'convertedFileNameDisplay','convertedFileSizeDisplay','emptyOutputState','canvasContainer','outputCanvas',
+    'resetDefaultsBtn','syntaxToggle','codeColorsContainer','headerToggle','headerTextInput'
+  ].map((id) => [id, $(id)]));
+  const ctx = els.outputCanvas.getContext('2d');
+
+  /* ---------- Helpers ---------- */
+  const formatBytes = (bytes) => {
+    if (!bytes) return '0 B';
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return `${parseFloat((bytes / 1024 ** i).toFixed(1))} ${sizes[i]}`;
+  };
+
+  const getExt = () => state.targetFormat.split('/')[1].replace('jpeg', 'jpg');
+  const getBaseName = () => els.outputFileNameInput.value.trim() || 'converted-file';
+  const parseRatio = (r) => { const [w, h] = r.split(':').map(Number); return w / h; };
+  const show = (el, visible) => el.classList.toggle('hidden', !visible);
+
+  const downloadBlob = (blob, filename) => {
+    const url = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement('a'), { href: url, download: filename });
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const setSaveButtonState = (enabled) => {
+    state.hasContent = enabled;
+    els.saveFileBtn.disabled = !enabled;
+    els.saveFileBtn.className = SAVE_BTN_CLASS[enabled ? 'on' : 'off'];
+  };
+
+  const scheduleRender = () => {
+    if (state.renderPending) return;
+    state.renderPending = true;
+    requestAnimationFrame(() => {
+      state.renderPending = false;
+      renderLiveOutput();
+    });
+  };
+
+  /* ---------- Declarative control bindings ---------- */
+  // [elementId, stateKey, parser, labelId, labelFormatter]
+  const bindings = [
+    ['resolutionSelect', 'scaleMultiplier', parseFloat],
+    ['aspectRatioSelect', 'aspectRatio'],
+    ['bgColorPicker', 'bgColor', null, 'bgColorHex', (v) => v],
+    ['textColorPicker', 'textColor', null, 'textColorHex', (v) => v],
+    ['fontSizeSlider', 'fontSize', (v) => parseInt(v, 10), 'fontSizeValue', (v) => `${v}px`],
+    ['marginSlider', 'margin', (v) => parseInt(v, 10), 'marginValue', (v) => `${v}px`],
+    ['lineHeightSlider', 'lineHeight', parseFloat, 'lineHeightValue', (v) => `${v}x`]
+  ].map(([id, key, parse = (v) => v, labelId, fmt]) => ({
+    el: $(id), key, parse, label: labelId && $(labelId), fmt
+  }));
+
+  const syncBinding = ({ el, key, label, fmt }) => {
+    el.value = state[key];
+    if (label) label.textContent = fmt(state[key]);
+  };
+
+  bindings.forEach((b) => b.el.addEventListener('input', () => {
+    state[b.key] = b.parse(b.el.value);
+    if (b.label) b.label.textContent = b.fmt(state[b.key]);
+    scheduleRender();
+  }));
+  // <select> elements fire 'change' as well as 'input' in modern browsers; 'input' covers both.
+
+  // Code theme colour pickers
+  Object.entries({ kwColorPicker: 'keyword', strColorPicker: 'string', cmtColorPicker: 'comment', fnColorPicker: 'fnNum' })
+    .forEach(([id, key]) => $(id).addEventListener('input', (e) => {
+      state.theme[key] = e.target.value;
       scheduleRender();
-    })();
-  </script>
+    }));
+
+  els.targetFormatSelect.addEventListener('change', (e) => { state.targetFormat = e.target.value; scheduleRender(); });
+  els.outputFileNameInput.addEventListener('input', () => updateConvertedBadge());
+
+  els.headerToggle.addEventListener('change', (e) => {
+    state.hasHeader = e.target.checked;
+    els.headerTextInput.disabled = !state.hasHeader;
+    scheduleRender();
+  });
+  els.headerTextInput.addEventListener('input', (e) => { state.headerText = e.target.value; scheduleRender(); });
+
+  els.syntaxToggle.addEventListener('change', (e) => {
+    state.syntaxHighlight = e.target.checked;
+    show(els.codeColorsContainer, state.syntaxHighlight);
+    scheduleRender();
+  });
+
+  els.resetDefaultsBtn.addEventListener('click', () => {
+    Object.assign(state, DEFAULTS, { hasHeader: false, headerText: '', syntaxHighlight: false });
+    bindings.forEach(syncBinding);
+    els.headerToggle.checked = false;
+    els.headerTextInput.disabled = true;
+    els.headerTextInput.value = '';
+    els.syntaxToggle.checked = false;
+    show(els.codeColorsContainer, false);
+    scheduleRender();
+  });
+
+  /* ---------- Panel resizing & collapsing ---------- */
+  let isResizing = false;
+
+  els.resizerDivider.addEventListener('mousedown', () => {
+    if (state.isCollapsed) return;
+    isResizing = true;
+    els.resizerDivider.classList.add('is-resizing');
+    document.body.style.cursor = 'col-resize';
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isResizing || state.isCollapsed) return;
+    const rect = els.workspaceContainer.getBoundingClientRect();
+    const x = Math.max(MIN_SOURCE_PX, Math.min(rect.width - MIN_OUTPUT_PX, e.clientX - rect.left));
+    els.sourcePanel.style.width = `${(x / rect.width) * 100}%`;
+    scheduleRender();
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (!isResizing) return;
+    isResizing = false;
+    els.resizerDivider.classList.remove('is-resizing');
+    document.body.style.cursor = 'default';
+    scheduleRender();
+  });
+
+  els.toggleCollapseBtn.addEventListener('click', () => {
+    const c = (state.isCollapsed = !state.isCollapsed);
+    show(els.sourcePanelBody, !c);
+    show(els.resizerDivider, !c);
+    els.sourcePanel.style.width = c ? 'auto' : '50%';
+    els.collapseIcon.className = `fa-solid fa-chevron-${c ? 'right' : 'left'} text-xs`;
+    els.collapseText.textContent = c ? 'Expand' : 'Collapse';
+    scheduleRender();
+  });
+
+  /* ---------- File handling ---------- */
+  const updateSourceFileInfo = (name, size) => {
+    const hasName = name && name !== '--';
+    els.sourceFileName.textContent = name || '--';
+    els.sourceFileSize.textContent = formatBytes(size);
+    els.outputFileNameInput.value = hasName ? (name.substring(0, name.lastIndexOf('.')) || name) : '';
+    updateConvertedBadge();
+  };
+
+  const showSourceView = (view) => {
+    show(els.sourceTextEditor, view === 'text');
+    show(els.sourceImagePreviewContainer, view === 'image');
+  };
+
+  const readImageFile = (file) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        state.loadedImage = img;
+        els.sourceImagePreview.src = e.target.result;
+        showSourceView('image');
+        setSaveButtonState(true);
+        scheduleRender();
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const readTextFile = (file) => {
+    state.loadedImage = null;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      state.sourceText = e.target.result;
+      els.sourceTextEditor.value = state.sourceText;
+      showSourceView('text');
+      setSaveButtonState(state.sourceText.trim().length > 0);
+      scheduleRender();
+    };
+    reader.readAsText(file);
+  };
+
+  const handleFileSelect = (file) => {
+    if (!file) return;
+    state.file = file;
+    show(els.dropZone, false);
+    updateSourceFileInfo(file.name, file.size);
+    (file.type.startsWith('image/') ? readImageFile : readTextFile)(file);
+  };
+
+  els.dropZone.addEventListener('click', () => els.fileUploadInput.click());
+  els.fileUploadInput.addEventListener('change', (e) => handleFileSelect(e.target.files[0]));
+
+  ['dragover', 'dragenter'].forEach((evt) => els.dropZone.addEventListener(evt, (e) => {
+    e.preventDefault();
+    els.dropZone.classList.add('border-blue-400');
+  }));
+  ['dragleave', 'drop'].forEach((evt) => els.dropZone.addEventListener(evt, (e) => {
+    e.preventDefault();
+    els.dropZone.classList.remove('border-blue-400');
+  }));
+  els.dropZone.addEventListener('drop', (e) => {
+    if (e.dataTransfer.files.length) handleFileSelect(e.dataTransfer.files[0]);
+  });
+
+  els.sourceTextEditor.addEventListener('input', (e) => {
+    state.sourceText = e.target.value;
+    const bytes = new Blob([state.sourceText]).size;
+    if (!state.file) {
+      updateSourceFileInfo(state.sourceText.trim() ? 'untitled.txt' : '--', bytes);
+      if (state.sourceText.trim()) {
+        show(els.dropZone, false);
+        show(els.sourceTextEditor, true);
+      }
+    } else {
+      els.sourceFileSize.textContent = formatBytes(bytes);
+    }
+    setSaveButtonState(state.sourceText.trim().length > 0 || state.loadedImage !== null);
+    scheduleRender();
+  });
+
+  /* ---------- Rendering ---------- */
+  const renderImage = (scale) => {
+    const img = state.loadedImage;
+    const width = img.width * scale;
+    const height = state.aspectRatio === 'auto' ? img.height * scale : width / parseRatio(state.aspectRatio);
+
+    els.outputCanvas.width = width;
+    els.outputCanvas.height = height;
+    ctx.fillStyle = state.bgColor;
+    ctx.fillRect(0, 0, width, height);
+
+    const imgRatio = img.width / img.height;
+    let drawW = width;
+    let drawH = width / imgRatio;
+    if (drawH > height) { drawH = height; drawW = height * imgRatio; }
+    ctx.drawImage(img, (width - drawW) / 2, (height - drawH) / 2, drawW, drawH);
+  };
+
+  // Draws one line, optionally colouring tokens as code
+  const drawLine = (text, x, y) => {
+    if (!state.syntaxHighlight) {
+      ctx.fillStyle = state.textColor;
+      ctx.fillText(text, x, y);
+      return;
+    }
+    const { theme, textColor } = state;
+    let curX = x;
+    let last = 0;
+    let m;
+    TOKEN_RE.lastIndex = 0;
+
+    while ((m = TOKEN_RE.exec(text)) !== null) {
+      if (m.index > last) curX += ctx.measureText(text.substring(last, m.index)).width;
+      const t = m[0];
+      if (t.startsWith('//') || t.startsWith('/*')) ctx.fillStyle = theme.comment;
+      else if (t[0] === '"' || t[0] === "'" || t[0] === '`') ctx.fillStyle = theme.string;
+      else if (KEYWORDS.has(t)) ctx.fillStyle = theme.keyword;
+      else if (!isNaN(t) || text[TOKEN_RE.lastIndex] === '(') ctx.fillStyle = theme.fnNum;
+      else ctx.fillStyle = textColor;
+
+      ctx.fillText(t, curX, y);
+      curX += ctx.measureText(t).width;
+      last = TOKEN_RE.lastIndex;
+    }
+    if (last < text.length) {
+      ctx.fillStyle = textColor;
+      ctx.fillText(text.substring(last), curX, y);
+    }
+  };
+
+  const renderText = (scale) => {
+    const margin = state.margin * scale;
+    const spacing = state.lineHeight;
+    const paragraphs = state.sourceText.split('\n');
+    const hasHeader = state.hasHeader && state.headerText;
+    let fontSize = state.fontSize * scale;
+
+    ctx.font = `${fontSize}px ${MONO}`;
+    let maxWidth = 0;
+    for (const p of paragraphs) maxWidth = Math.max(maxWidth, ctx.measureText(p).width);
+
+    const headerOffset = hasHeader ? fontSize * 2 : 0;
+    let width = maxWidth + margin * 2;
+    let height = paragraphs.length * fontSize * spacing + margin * 2 + headerOffset;
+
+    if (state.aspectRatio !== 'auto') {
+      width = Math.max(width, 400 * scale);
+      height = width / parseRatio(state.aspectRatio);
+
+      // Shrink the font if wrapped content would overflow the fixed height
+      const availableHeight = height - margin * 2 - headerOffset;
+      const innerWidth = Math.max(1, width - margin * 2);
+      const lines = paragraphs.reduce((acc, p) =>
+        acc + (p.trim() ? Math.ceil(ctx.measureText(p).width / innerWidth) : 1), 0);
+      const fitted = availableHeight / Math.max(1, lines) / spacing;
+      if (fitted < fontSize && fitted > 4) fontSize = fitted;
+    }
+
+    els.outputCanvas.width = width;   // resets canvas state
+    els.outputCanvas.height = height;
+    ctx.fillStyle = state.bgColor;
+    ctx.fillRect(0, 0, width, height);
+
+    let y = margin + fontSize;
+    if (hasHeader) {
+      ctx.fillStyle = state.textColor;
+      ctx.font = `bold ${fontSize * 1.3}px ${MONO}`;
+      ctx.fillText(state.headerText, margin, y);
+      y += fontSize * 1.8;
+    }
+
+    ctx.font = `${fontSize}px ${MONO}`;
+    const lineStep = fontSize * spacing;
+    const wrapWidth = width - margin * 2;
+
+    for (const p of paragraphs) {
+      if (!p.trim()) { y += lineStep; continue; }
+
+      let line = '';
+      p.split(' ').forEach((word, i) => {
+        const test = `${line}${word} `;
+        if (i > 0 && ctx.measureText(test).width > wrapWidth) {
+          drawLine(line, margin, y);
+          line = `${word} `;
+          y += lineStep;
+        } else {
+          line = test;
+        }
+      });
+      drawLine(line, margin, y);
+      y += lineStep;
+    }
+  };
+
+  let sizeTimer = 0;
+  const updateBlobSize = () => {
+    clearTimeout(sizeTimer);
+    sizeTimer = setTimeout(() => {
+      els.outputCanvas.toBlob((blob) => {
+        if (blob) updateConvertedBadge(blob.size);
+      }, state.targetFormat);
+    }, SIZE_DEBOUNCE_MS);
+  };
+
+  function renderLiveOutput() {
+    show(els.emptyOutputState, !state.hasContent);
+    show(els.canvasContainer, state.hasContent);
+
+    if (!state.hasContent) {
+      updateConvertedBadge(0);
+      return;
+    }
+    if (state.loadedImage) renderImage(state.scaleMultiplier);
+    else renderText(state.scaleMultiplier);
+    updateBlobSize();
+  }
+
+  function updateConvertedBadge(sizeBytes) {
+    if (sizeBytes !== undefined) state.currentBlobSize = sizeBytes;
+    els.convertedFileNameDisplay.textContent = state.hasContent ? `${getBaseName()}.${getExt()}` : '--';
+    els.convertedFileSizeDisplay.textContent = state.hasContent ? formatBytes(state.currentBlobSize) : '0 KB';
+  }
+
+  /* ---------- Export ---------- */
+  els.saveFileBtn.addEventListener('click', () => {
+    if (!state.hasContent) return;
+    const filename = `${getBaseName()}.${getExt()}`;
+    els.outputCanvas.toBlob((blob) => blob && downloadBlob(blob, filename), state.targetFormat, SAVE_QUALITY);
+  });
+
+  window.addEventListener('resize', scheduleRender);
+
+  /* ---------- Init ---------- */
+  setSaveButtonState(false);
+  updateSourceFileInfo('--', 0);
+  scheduleRender();
+})();
+</script>
 </body>
 </html>
