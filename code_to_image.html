@@ -18,6 +18,25 @@
   input[type="color"]::-webkit-color-swatch { border:none; border-radius:4px; }
   #resizerDivider { cursor:col-resize; transition:background-color .15s ease; }
   #resizerDivider:hover, #resizerDivider.is-resizing { background-color:#38bdf8; }
+  .settings-group { border:1px solid #1e293b; border-radius:8px; overflow:hidden; background:#0b1120; }
+  .settings-group > summary { list-style:none; display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px; color:#e2e8f0; font-size:11px; font-weight:600; cursor:pointer; user-select:none; }
+  .settings-group > summary::-webkit-details-marker { display:none; }
+  .settings-group > summary > span { display:flex; align-items:center; gap:8px; min-width:0; }
+  .settings-chevron { color:#64748b; font-size:10px; transition:transform .15s ease; }
+  .settings-group[open] .settings-chevron { transform:rotate(180deg); }
+  .settings-content { border-top:1px solid #1e293b; padding:10px; }
+  .setting-label { display:block; color:#94a3b8; font-size:10px; font-weight:500; }
+  .setting-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .setting-value { color:#cbd5e1; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:10px; white-space:nowrap; }
+  .setting-select, .setting-input { width:100%; background:#1f2937; color:#e5e7eb; font-size:11px; padding:7px 8px; border:1px solid #374151; border-radius:5px; outline:none; }
+  .setting-select:focus, .setting-input:focus { border-color:#3b82f6; }
+  .setting-range { width:100%; height:4px; margin-top:6px; accent-color:#38bdf8; cursor:pointer; }
+  .setting-toggle { display:flex; align-items:center; justify-content:space-between; gap:8px; color:#cbd5e1; font-size:11px; cursor:pointer; }
+  .setting-checkbox { accent-color:#3b82f6; flex-shrink:0; }
+  .setting-help { color:#64748b; font-size:9px; line-height:1.4; }
+  .color-field { display:flex; align-items:center; gap:6px; min-width:0; background:#1f2937; border:1px solid #374151; border-radius:5px; padding:5px; }
+  .color-input { width:22px; height:22px; flex-shrink:0; border:0; padding:0; background:transparent; cursor:pointer; }
+  .syntax-color { width:100%; height:25px; padding:2px; background:#1f2937; border:1px solid #374151; border-radius:5px; cursor:pointer; }
 </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden select-none">
@@ -35,7 +54,7 @@
 <main id="workspaceContainer" class="flex-1 flex overflow-hidden p-3 gap-0">
 
   <!-- Source panel -->
-  <section id="sourcePanel" class="flex flex-col bg-gray-900 border border-gray-800 rounded-xl overflow-hidden transition-all duration-100 min-w-[280px]" style="width:50%;">
+  <section id="sourcePanel" class="flex flex-col bg-gray-900 border border-gray-800 rounded-xl overflow-hidden transition-all duration-100 min-w-[280px]" style="width:calc((100% - 19rem) / 2);">
     <div class="h-14 bg-black px-4 flex items-center justify-between border-b border-gray-800 shrink-0 gap-2">
       <div class="flex items-center gap-2 min-w-0">
         <span class="text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0">Source File</span>
@@ -108,133 +127,87 @@
         </div>
       </div>
 
-      <aside class="w-64 bg-gray-900 border-l border-gray-800 p-3 flex flex-col gap-3 overflow-y-auto custom-scrollbar shrink-0">
-        <div class="flex items-center justify-between pb-2 border-b border-gray-800">
-          <span class="text-xs font-semibold text-gray-300">Image Tweaks</span>
-          <button id="resetDefaultsBtn" title="Reset to Defaults" class="w-6 h-6 rounded hover:bg-gray-800 text-gray-400 hover:text-gray-200 flex items-center justify-center transition">
+      <aside class="w-72 bg-gray-900 border-l border-gray-800 flex flex-col shrink-0 min-h-0">
+        <div class="px-3 py-3 flex items-center justify-between border-b border-gray-800 shrink-0">
+          <div class="min-w-0">
+            <h2 class="text-xs font-bold text-gray-100">Customize</h2>
+            <p class="text-[10px] text-gray-500 mt-0.5">Adjust the exported image</p>
+          </div>
+          <button id="resetDefaultsBtn" title="Reset all settings" aria-label="Reset all settings" class="w-7 h-7 rounded-md hover:bg-gray-800 text-gray-400 hover:text-gray-100 flex items-center justify-center transition">
             <i class="fa-solid fa-rotate-left text-xs"></i>
           </button>
         </div>
 
-        <div class="space-y-1">
-          <label class="text-[11px] font-medium text-gray-400">Resolution Multiplier</label>
-          <select id="resolutionSelect" class="w-full bg-gray-800 text-gray-200 text-xs px-2 py-1.5 rounded border border-gray-700">
-            <option value="1">1x Standard</option>
-            <option value="2">2x HD</option>
-            <option value="4">4x Ultra HD</option>
-          </select>
-        </div>
-
-        <div class="space-y-1">
-          <label class="text-[11px] font-medium text-gray-400">Aspect Ratio</label>
-          <select id="aspectRatioSelect" class="w-full bg-gray-800 text-gray-200 text-xs px-2 py-1.5 rounded border border-gray-700">
-            <option value="auto">Auto / Fits Content</option>
-            <option value="1:1">1:1 Square</option>
-            <option value="16:9">16:9 Landscape</option>
-            <option value="9:16">9:16 Portrait</option>
-            <option value="4:3">4:3 Standard</option>
-            <option value="3:2">3:2 Classic</option>
-          </select>
-        </div>
-
-        <div class="space-y-2 pt-2 border-t border-gray-800">
-          <label class="flex items-center justify-between cursor-pointer text-[11px] text-gray-300 font-medium">
-            <span class="flex items-center gap-1.5"><i class="fa-solid fa-code text-blue-400 text-xs"></i><span>Highlight Syntax</span></span>
-            <input type="checkbox" id="syntaxToggle" class="rounded bg-gray-800 border-gray-700 text-blue-500 focus:ring-0" />
-          </label>
-          <div id="codeColorsContainer" class="hidden grid grid-cols-2 gap-2 pt-1">
-            <div class="space-y-1"><label class="text-[10px] text-gray-400">Keywords</label>
-              <input type="color" id="kwColorPicker" value="#ff79c6" class="w-full h-6 rounded cursor-pointer border-0 bg-gray-800 p-0.5" /></div>
-            <div class="space-y-1"><label class="text-[10px] text-gray-400">Strings</label>
-              <input type="color" id="strColorPicker" value="#f1fa8c" class="w-full h-6 rounded cursor-pointer border-0 bg-gray-800 p-0.5" /></div>
-            <div class="space-y-1"><label class="text-[10px] text-gray-400">Comments</label>
-              <input type="color" id="cmtColorPicker" value="#6272a4" class="w-full h-6 rounded cursor-pointer border-0 bg-gray-800 p-0.5" /></div>
-            <div class="space-y-1"><label class="text-[10px] text-gray-400">Functions/Nums</label>
-              <input type="color" id="fnColorPicker" value="#50fa7b" class="w-full h-6 rounded cursor-pointer border-0 bg-gray-800 p-0.5" /></div>
-          </div>
-        </div>
-
-        <div class="space-y-3 pt-2 border-t border-gray-800">
-          <label class="flex items-center justify-between cursor-pointer text-[11px] text-gray-300 font-medium">
-            <span class="flex items-center gap-1.5"><i class="fa-solid fa-list-ol text-blue-400 text-xs"></i><span>Show Line Numbers</span></span>
-            <input type="checkbox" id="lineNumbersToggle" class="rounded bg-gray-800 border-gray-700 text-blue-500 focus:ring-0" />
-          </label>
-
-          <div class="space-y-1">
-            <div class="flex items-center justify-between">
-              <label for="lineNumberGapSlider" class="text-[10px] text-gray-400">Spacing after line number</label>
-              <span id="lineNumberGapValue" class="text-[10px] text-gray-300 font-mono">18px</span>
+        <div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2">
+          <details class="settings-group" open>
+            <summary><span><i class="fa-solid fa-expand text-blue-400"></i> Canvas &amp; Size</span><i class="fa-solid fa-chevron-down settings-chevron"></i></summary>
+            <div class="settings-content space-y-3">
+              <div class="space-y-1">
+                <label for="resolutionSelect" class="setting-label">Export Resolution</label>
+                <select id="resolutionSelect" class="setting-select">
+                  <option value="1">1× Standard</option><option value="2" selected>2× HD</option><option value="4">4× Ultra HD</option>
+                </select>
+              </div>
+              <div class="space-y-1">
+                <label for="aspectRatioSelect" class="setting-label">Canvas Ratio</label>
+                <select id="aspectRatioSelect" class="setting-select">
+                  <option value="auto">Auto (Fit Content)</option><option value="1:1">1:1 (Square)</option><option value="16:9">16:9 (Landscape)</option><option value="9:16">9:16 (Portrait)</option><option value="4:3">4:3 (Standard)</option><option value="3:2">3:2 (Classic)</option>
+                </select>
+              </div>
+              <div class="space-y-1">
+                <div class="setting-row"><label for="marginSlider" class="setting-label">Outer Padding</label><span id="marginValue" class="setting-value">24px</span></div>
+                <input type="range" id="marginSlider" min="0" max="100" value="24" class="setting-range" />
+              </div>
             </div>
-            <input type="range" id="lineNumberGapSlider" min="0" max="64" step="1" value="18" disabled class="w-full disabled:opacity-40" />
-          </div>
+          </details>
 
-          <label class="flex items-center justify-between cursor-pointer text-[11px] text-gray-300">
-            <span>Highlight lines</span>
-            <input type="checkbox" id="highlightLineNumberToggle" disabled class="rounded bg-gray-800 border-gray-700 text-blue-500 focus:ring-0 disabled:opacity-40" />
-          </label>
-
-          <div class="space-y-1">
-            <label for="highlightedLinesInput" class="text-[10px] text-gray-400">Lines to highlight</label>
-            <input type="text" id="highlightedLinesInput" value="1" placeholder="e.g. 1, 3-5, 8" disabled class="w-full bg-gray-800 text-gray-200 text-xs px-2 py-1.5 rounded border border-gray-700 disabled:opacity-40 focus:outline-none focus:border-blue-500" />
-            <p class="text-[10px] text-gray-500">Enter individual lines and ranges, separated by commas: 1, 3-5, 8.</p>
-          </div>
-
-          <div class="space-y-1">
-            <label for="highlightColorPicker" class="text-[10px] text-gray-400">Highlight color</label>
-            <div class="flex items-center gap-2 bg-gray-800 p-1.5 rounded border border-gray-700">
-              <input type="color" id="highlightColorPicker" value="#172b3d" disabled class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent disabled:opacity-40" />
-              <span id="highlightColorHex" class="text-[10px] text-gray-300 font-mono">#172b3d</span>
+          <details class="settings-group">
+            <summary><span><i class="fa-solid fa-palette text-blue-400"></i> Colors</span><i class="fa-solid fa-chevron-down settings-chevron"></i></summary>
+            <div class="settings-content">
+              <div class="grid grid-cols-2 gap-2">
+                <div class="space-y-1"><label for="bgColorPicker" class="setting-label">Background</label><div class="color-field"><input type="color" id="bgColorPicker" value="#000000" class="color-input" /><span id="bgColorHex" class="setting-value">#000000</span></div></div>
+                <div class="space-y-1"><label for="textColorPicker" class="setting-label">Text</label><div class="color-field"><input type="color" id="textColorPicker" value="#ffffff" class="color-input" /><span id="textColorHex" class="setting-value">#ffffff</span></div></div>
+              </div>
             </div>
-          </div>
-        </div>
+          </details>
 
-        <div class="grid grid-cols-2 gap-2 pt-2 border-t border-gray-800">
-          <div class="space-y-1">
-            <label class="text-[11px] font-medium text-gray-400">Background</label>
-            <div class="flex items-center gap-1.5 bg-gray-800 p-1 rounded border border-gray-700">
-              <input type="color" id="bgColorPicker" value="#000000" class="w-5 h-5 rounded cursor-pointer border-0 bg-transparent" />
-              <span id="bgColorHex" class="text-[10px] text-gray-300 font-mono">#000000</span>
+          <details class="settings-group">
+            <summary><span><i class="fa-solid fa-font text-blue-400"></i> Typography</span><i class="fa-solid fa-chevron-down settings-chevron"></i></summary>
+            <div class="settings-content space-y-3">
+              <div class="space-y-1"><div class="setting-row"><label for="fontSizeSlider" class="setting-label">Font Size</label><span id="fontSizeValue" class="setting-value">12px</span></div><input type="range" id="fontSizeSlider" min="8" max="72" value="12" class="setting-range" /></div>
+              <div class="space-y-1"><div class="setting-row"><label for="lineHeightSlider" class="setting-label">Line Height</label><span id="lineHeightValue" class="setting-value">1.1×</span></div><input type="range" id="lineHeightSlider" min="1.0" max="3.0" step="0.1" value="1.1" class="setting-range" /></div>
             </div>
-          </div>
-          <div class="space-y-1">
-            <label class="text-[11px] font-medium text-gray-400">Text Color</label>
-            <div class="flex items-center gap-1.5 bg-gray-800 p-1 rounded border border-gray-700">
-              <input type="color" id="textColorPicker" value="#ffffff" class="w-5 h-5 rounded cursor-pointer border-0 bg-transparent" />
-              <span id="textColorHex" class="text-[10px] text-gray-300 font-mono">#ffffff</span>
+          </details>
+
+          <details class="settings-group">
+            <summary><span><i class="fa-solid fa-heading text-blue-400"></i> Header</span><i class="fa-solid fa-chevron-down settings-chevron"></i></summary>
+            <div class="settings-content space-y-2">
+              <label class="setting-toggle"><span>Add a header</span><input type="checkbox" id="headerToggle" class="setting-checkbox" /></label>
+              <input type="text" id="headerTextInput" disabled placeholder="Enter header text…" class="setting-input disabled:opacity-40" />
+              <div class="space-y-1"><div class="setting-row"><label for="headerGapSlider" class="setting-label">Header-to-code spacing</label><span id="headerGapValue" class="setting-value">24px</span></div><input type="range" id="headerGapSlider" min="0" max="100" step="1" value="24" class="setting-range" /><p class="setting-help">Controls the space between the header and the first code line.</p></div>
             </div>
-          </div>
-        </div>
+          </details>
 
-        <div class="space-y-1">
-          <div class="flex justify-between items-center text-[11px]">
-            <label class="font-medium text-gray-400">Font Size</label>
-            <span id="fontSizeValue" class="text-gray-300 font-mono">12px</span>
-          </div>
-          <input type="range" id="fontSizeSlider" min="8" max="72" value="12" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
-        </div>
+          <details class="settings-group">
+            <summary><span><i class="fa-solid fa-highlighter text-blue-400"></i> Text Highlight</span><i class="fa-solid fa-chevron-down settings-chevron"></i></summary>
+            <div class="settings-content space-y-3">
+              <label class="setting-toggle"><span>Show line numbers</span><input type="checkbox" id="lineNumbersToggle" checked class="setting-checkbox" /></label>
+              <div class="space-y-1"><div class="setting-row"><label for="lineNumberGapSlider" class="setting-label">Number-to-text gap</label><span id="lineNumberGapValue" class="setting-value">18px</span></div><input type="range" id="lineNumberGapSlider" min="0" max="64" step="1" value="18" disabled class="setting-range disabled:opacity-40" /></div>
+              <label class="setting-toggle"><span>Highlight selected lines</span><input type="checkbox" id="highlightLineNumberToggle" disabled class="setting-checkbox disabled:opacity-40" /></label>
+              <div class="space-y-1"><label for="highlightedLinesInput" class="setting-label">Line numbers / ranges</label><input type="text" id="highlightedLinesInput" value="1" placeholder="e.g. 1, 3-5, 8" disabled class="setting-input disabled:opacity-40" /><p class="setting-help">Enter individual lines separated by commas (2, 12, 30...), or use ranges with a hyphen. (6-10, 20, 30-35...)</p></div>
+              <div class="space-y-1"><label for="highlightColorPicker" class="setting-label">Row highlight color</label><div class="color-field"><input type="color" id="highlightColorPicker" value="#172b3d" disabled class="color-input disabled:opacity-40" /><span id="highlightColorHex" class="setting-value">#172b3d</span></div></div>
 
-        <div class="space-y-1">
-          <div class="flex justify-between items-center text-[11px]">
-            <label class="font-medium text-gray-400">Text Margin</label>
-            <span id="marginValue" class="text-gray-300 font-mono">24px</span>
-          </div>
-          <input type="range" id="marginSlider" min="0" max="100" value="24" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
-        </div>
+              <div class="border-t border-gray-700 my-2"></div>
+              <label class="setting-toggle"><span>Colorize code syntax</span><input type="checkbox" id="syntaxToggle" checked class="setting-checkbox" /></label>
+              <div id="codeColorsContainer" class="grid grid-cols-2 gap-2">
+                <div class="space-y-1"><label for="kwColorPicker" class="setting-label">Keywords</label><input type="color" id="kwColorPicker" value="#ff79c6" class="syntax-color" /></div>
+                <div class="space-y-1"><label for="strColorPicker" class="setting-label">Strings</label><input type="color" id="strColorPicker" value="#f1fa8c" class="syntax-color" /></div>
+                <div class="space-y-1"><label for="cmtColorPicker" class="setting-label">Comments</label><input type="color" id="cmtColorPicker" value="#6272a4" class="syntax-color" /></div>
+                <div class="space-y-1"><label for="fnColorPicker" class="setting-label">Functions &amp; numbers</label><input type="color" id="fnColorPicker" value="#50fa7b" class="syntax-color" /></div>
+              </div>
 
-        <div class="space-y-1">
-          <div class="flex justify-between items-center text-[11px]">
-            <label class="font-medium text-gray-400">Line Spacing</label>
-            <span id="lineHeightValue" class="text-gray-300 font-mono">1.5x</span>
-          </div>
-          <input type="range" id="lineHeightSlider" min="1.0" max="3.0" step="0.1" value="1.5" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
-        </div>
-
-        <div class="space-y-2 pt-2 border-t border-gray-800">
-          <label class="flex items-center gap-2 cursor-pointer text-[11px] text-gray-300 font-medium">
-            <input type="checkbox" id="headerToggle" class="rounded bg-gray-800 border-gray-700 text-blue-500 focus:ring-0" />
-            <span>Header</span>
-          </label>
-          <input type="text" id="headerTextInput" disabled placeholder="Header text..." class="w-full bg-gray-800 text-gray-200 text-xs px-2 py-1.5 rounded border border-gray-700 disabled:opacity-40 focus:outline-none focus:border-blue-500" />
+            </div>
+          </details>
         </div>
       </aside>
     </div>
@@ -269,8 +242,9 @@
   /* Settings restored by the reset button */
   const DEFAULTS = Object.freeze({
     scaleMultiplier: 1, aspectRatio: 'auto', bgColor: '#000000', textColor: '#ffffff',
-    fontSize: 12, margin: 24, lineHeight: 1.5,
-    showLineNumbers: false, highlightLineNumber: false, highlightedLines: '1', lineNumberGap: 18, highlightColor: '#172b3d'
+    fontSize: 12, margin: 24, lineHeight: 1.1,
+    showLineNumbers: true, highlightLineNumber: false, highlightedLines: '1', lineNumberGap: 18, highlightColor: '#172b3d',
+    syntaxHighlight: true, headerGap: 24
   });
 
   /* ---------- State ---------- */
@@ -278,7 +252,7 @@
     ...DEFAULTS,
     file: null, sourceText: '', hasContent: false, isCollapsed: false,
     targetFormat: 'image/png', hasHeader: false, headerText: '',
-    loadedImage: null, renderPending: false, currentBlobSize: 0, syntaxHighlight: false,
+    loadedImage: null, renderPending: false, currentBlobSize: 0,
     theme: { keyword: '#ff79c6', string: '#f1fa8c', comment: '#6272a4', fnNum: '#50fa7b' }
   };
 
@@ -290,7 +264,7 @@
     'sourceImagePreviewContainer','sourceImagePreview','targetFormatSelect','outputFileNameInput','saveFileBtn',
     'convertedFileNameDisplay','convertedFileSizeDisplay','emptyOutputState','canvasContainer','outputCanvas',
     'resetDefaultsBtn','syntaxToggle','codeColorsContainer','headerToggle','headerTextInput',
-    'lineNumbersToggle','highlightLineNumberToggle','highlightedLinesInput','lineNumberGapSlider','lineNumberGapValue','highlightColorPicker','highlightColorHex'
+    'lineNumbersToggle','highlightLineNumberToggle','highlightedLinesInput','lineNumberGapSlider','lineNumberGapValue','highlightColorPicker','highlightColorHex','headerGapSlider','headerGapValue'
   ].map((id) => [id, $(id)]));
   const ctx = els.outputCanvas.getContext('2d');
 
@@ -341,7 +315,8 @@
     ['fontSizeSlider', 'fontSize', (v) => parseInt(v, 10), 'fontSizeValue', (v) => `${v}px`],
     ['marginSlider', 'margin', (v) => parseInt(v, 10), 'marginValue', (v) => `${v}px`],
     ['lineHeightSlider', 'lineHeight', parseFloat, 'lineHeightValue', (v) => `${v}x`],
-    ['lineNumberGapSlider', 'lineNumberGap', (v) => parseInt(v, 10), 'lineNumberGapValue', (v) => `${v}px`]
+    ['lineNumberGapSlider', 'lineNumberGap', (v) => parseInt(v, 10), 'lineNumberGapValue', (v) => `${v}px`],
+    ['headerGapSlider', 'headerGap', (v) => parseInt(v, 10), 'headerGapValue', (v) => `${v}px`]
   ].map(([id, key, parse = (v) => v, labelId, fmt]) => ({
     el: $(id), key, parse, label: labelId && $(labelId), fmt
   }));
@@ -412,14 +387,14 @@
   });
 
   els.resetDefaultsBtn.addEventListener('click', () => {
-    Object.assign(state, DEFAULTS, { hasHeader: false, headerText: '', syntaxHighlight: false });
+    Object.assign(state, DEFAULTS, { hasHeader: false, headerText: '' });
     bindings.forEach(syncBinding);
     els.headerToggle.checked = false;
     els.headerTextInput.disabled = true;
     els.headerTextInput.value = '';
-    els.syntaxToggle.checked = false;
-    show(els.codeColorsContainer, false);
-    els.lineNumbersToggle.checked = false;
+    els.syntaxToggle.checked = DEFAULTS.syntaxHighlight;
+    show(els.codeColorsContainer, DEFAULTS.syntaxHighlight);
+    els.lineNumbersToggle.checked = DEFAULTS.showLineNumbers;
     els.highlightLineNumberToggle.checked = false;
     els.highlightedLinesInput.value = '1';
     els.lineNumberGapSlider.value = String(DEFAULTS.lineNumberGap);
@@ -460,7 +435,7 @@
     const c = (state.isCollapsed = !state.isCollapsed);
     show(els.sourcePanelBody, !c);
     show(els.resizerDivider, !c);
-    els.sourcePanel.style.width = c ? 'auto' : '50%';
+    els.sourcePanel.style.width = c ? 'auto' : 'calc((100% - 19rem) / 2)';
     els.collapseIcon.className = `fa-solid fa-chevron-${c ? 'right' : 'left'} text-xs`;
     els.collapseText.textContent = c ? 'Expand' : 'Collapse';
     scheduleRender();
@@ -630,7 +605,7 @@
       // Auto size expands to fit the longest line; never wrap text.
       width = maxLineWidth + margin * 2 + lineNumberGutter;
       height = paragraphs.length * fontSize * spacing + margin * 2 +
-        (hasHeader ? fontSize * 2 : 0);
+        (hasHeader ? fontSize * 2 + state.headerGap * scale : 0);
     } else {
       // Fixed aspect ratios keep every source line on one row.
       // Reduce the font as needed to fit both the longest line and all rows.
@@ -644,7 +619,7 @@
         const widest = getMaxLineWidth();
         const requiredWidth = widest + margin * 2 + lineNumberGutter;
         const requiredHeight = paragraphs.length * fontSize * spacing + margin * 2 +
-          (hasHeader ? fontSize * 2 : 0);
+          (hasHeader ? fontSize * 2 + state.headerGap * scale : 0);
         const widthScale = requiredWidth > width ? width / requiredWidth : 1;
         const heightScale = requiredHeight > height ? height / requiredHeight : 1;
         const fitScale = Math.min(widthScale, heightScale);
@@ -674,7 +649,7 @@
       ctx.fillStyle = state.textColor;
       ctx.font = `bold ${fontSize * 1.3}px ${MONO}`;
       ctx.fillText(state.headerText, margin, y);
-      y += fontSize * 1.8;
+      y += fontSize * 1.3 + state.headerGap * scale;
     }
 
     ctx.font = `${fontSize}px ${MONO}`;
