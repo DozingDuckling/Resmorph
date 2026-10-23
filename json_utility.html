@@ -1,0 +1,691 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JSON Utility Workbench</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #101217;
+  --panel: #181b23;
+  --panel2: #202530;
+  --line: #303746;
+  --text: #e8edf5;
+  --muted: #9ba6b8;
+  --accent: #8ab4ff;
+  --green: #7ee0b3;
+  --red: #ff8585;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.5 system-ui, Segoe UI, sans-serif;
+}
+header {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.logo {
+  display: grid; place-items: center;
+  width: 42px; height: 42px;
+  border-radius: 10px;
+  background: #263b59; color: var(--accent);
+  font-size: 20px; font-weight: bold;
+}
+h1 { font-size: 20px; margin: 0; }
+.subtitle { color: var(--muted); font-size: 12px; }
+main { padding: 16px; max-width: 1800px; margin: auto; }
+.toolbar {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  align-items: center; margin-bottom: 14px;
+}
+button, select, .file-button {
+  padding: 9px 13px; border: 1px solid var(--line);
+  border-radius: 8px; background: var(--panel2);
+  color: var(--text); font: inherit; cursor: pointer;
+}
+button:hover, .file-button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); color: #101827; border-color: var(--accent); font-weight: 650; }
+button.danger { color: var(--red); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+.file-button { display: inline-block; }
+.file-button input { display: none; }
+.tabs {
+  display: flex; gap: 5px; flex-wrap: wrap;
+  border-bottom: 1px solid var(--line); margin-bottom: 14px;
+}
+.tab { border: 0; background: transparent; color: var(--muted); border-radius: 8px 8px 0 0; }
+.tab.active { color: var(--accent); background: var(--panel2); }
+.workspace {
+  display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+  gap: 14px;
+}
+.panel {
+  min-width: 0; background: var(--panel);
+  border: 1px solid var(--line); border-radius: 11px; overflow: hidden;
+}
+.panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 13px; background: #1d222c;
+  border-bottom: 1px solid var(--line); gap: 8px;
+}
+.panel-title { font-weight: 650; }
+.panel-actions { display: flex; gap: 6px; }
+.panel-actions button { padding: 6px 9px; font-size: 12px; }
+.editor {
+  display: block; width: 100%; min-height: 62vh;
+  resize: vertical; padding: 16px;
+  border: 0; outline: none; border-radius: 0;
+  background: #0c0f15; color: #dce7f8;
+  font: 13px/1.65 Consolas, "Cascadia Code", monospace;
+  tab-size: 2; white-space: pre; overflow: auto;
+}
+.panel-footer {
+  display: flex; justify-content: space-between; gap: 8px;
+  padding: 9px 12px; color: var(--muted); font-size: 12px;
+  border-top: 1px solid var(--line); flex-wrap: wrap;
+}
+.status.ok { color: var(--green); }
+.status.bad { color: var(--red); }
+.hidden { display: none !important; }
+.tool-panel {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 11px; padding: 16px;
+}
+.tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.field { display: grid; gap: 7px; margin-bottom: 12px; }
+label { color: var(--muted); font-size: 12px; }
+input[type=text], textarea.tool-input, select {
+  width: 100%; min-width: 0; padding: 10px;
+  background: #0c0f15; color: var(--text);
+  border: 1px solid var(--line); border-radius: 7px;
+  font: 13px Consolas, monospace;
+}
+textarea.tool-input { min-height: 170px; resize: vertical; }
+.result {
+  background: #0c0f15; border: 1px solid var(--line);
+  padding: 12px; border-radius: 7px; min-height: 65px;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+  font: 13px/1.6 Consolas, monospace; overflow: auto;
+}
+.button-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+.small { color: var(--muted); font-size: 12px; }
+.tree { font: 13px/1.8 Consolas, monospace; overflow: auto; }
+.tree details { margin-left: 15px; }
+.tree summary { cursor: pointer; }
+.key { color: #8ab4ff; }
+.str { color: #9fe3a4; }
+.num { color: #f6d783; }
+.bool { color: #d3a4ff; }
+.null { color: #ff9e9e; }
+footer { text-align: center; padding: 18px; color: var(--muted); font-size: 12px; }
+@media(max-width: 850px) {
+  main { padding: 10px; }
+  .workspace, .tool-grid { grid-template-columns: 1fr; }
+  .editor { min-height: 350px; }
+  header { padding: 14px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo">{ }</div>
+    <div>
+      <h1>JSON Utility Workbench</h1>
+      <div class="subtitle">Format · Validate · Escape · Transform · Inspect</div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="toolbar">
+    <button class="primary" id="formatBtn">Format JSON</button>
+    <button id="minifyBtn">Minify</button>
+    <button id="validateBtn">Validate</button>
+    <button id="sortBtn">Sort keys</button>
+    <button id="repairBtn">Repair JSON</button>
+    <button id="swapBtn">Output → Input</button>
+    <label class="file-button">Open file<input type="file" id="fileInput" accept=".json,.txt,application/json"></label>
+    <button id="downloadBtn">Download output</button>
+    <button id="clearBtn" class="danger">Clear</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="mainTab">JSON Editor</button>
+    <button class="tab" data-tab="escapeTab">Escape Tools</button>
+    <button class="tab" data-tab="inspectTab">Tree & Search</button>
+    <button class="tab" data-tab="compareTab">Compare</button>
+    <button class="tab" data-tab="convertTab">Convert</button>
+  </div>
+
+  <!-- MAIN TWO-PANEL EDITOR -->
+  <section id="mainTab">
+    <div class="workspace">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Input JSON</span>
+          <div class="panel-actions">
+            <button id="sampleBtn">Sample</button>
+            <button id="pasteBtn">Paste</button>
+          </div>
+        </div>
+        <textarea id="input" class="editor" spellcheck="false"
+          placeholder='Paste or type your JSON here...'></textarea>
+        <div class="panel-footer">
+          <span id="inputStats">0 characters</span>
+          <span>Editable input</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Formatted Output</span>
+          <div class="panel-actions">
+            <button id="copyBtn">Copy</button>
+            <button id="selectOutputBtn">Select all</button>
+          </div>
+        </div>
+        <textarea id="output" class="editor" spellcheck="false"
+          placeholder="Formatted output will appear here..."></textarea>
+        <div class="panel-footer">
+          <span id="outputStats">0 characters</span>
+          <span id="status" class="status">Ready</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ESCAPE TOOLS -->
+  <section id="escapeTab" class="hidden">
+    <div class="tool-grid">
+      <div class="tool-panel">
+        <h3>JSON String Escape / Unescape</h3>
+        <div class="field">
+          <label for="escapeInput">Input text</label>
+          <textarea id="escapeInput" class="tool-input" placeholder="Enter text with quotes, newlines, etc."></textarea>
+        </div>
+        <div class="button-row">
+          <button class="primary" id="escapeBtn">Escape</button>
+          <button id="unescapeBtn">Unescape</button>
+          <button id="copyEscapeBtn">Copy result</button>
+        </div>
+        <div id="escapeResult" class="result"></div>
+      </div>
+      <div class="tool-panel">
+        <h3>URL Encoding & JavaScript</h3>
+        <div class="field">
+          <label for="encodeInput">Input</label>
+          <textarea id="encodeInput" class="tool-input" placeholder="Text or JSON"></textarea>
+        </div>
+        <div class="button-row">
+          <button id="urlEncodeBtn">URL encode</button>
+          <button id="urlDecodeBtn">URL decode</button>
+          <button id="jsStringBtn">JSON string literal</button>
+          <button id="copyEncodeBtn">Copy result</button>
+        </div>
+        <div id="encodeResult" class="result"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TREE AND SEARCH -->
+  <section id="inspectTab" class="hidden">
+    <div class="tool-panel">
+      <h3>JSON Tree Explorer</h3>
+      <div class="tool-grid">
+        <div class="field">
+          <label for="pathInput">JSON path</label>
+          <input type="text" id="pathInput" placeholder="user.name or items[0].id">
+          <button id="pathBtn">Get path value</button>
+        </div>
+        <div class="field">
+          <label for="searchInput">Search keys and values</label>
+          <input type="text" id="searchInput" placeholder="Search JSON...">
+          <button id="searchBtn">Search</button>
+        </div>
+      </div>
+      <div id="inspectResult" class="result">Load valid JSON in the editor first.</div>
+      <h3>Collapsible tree</h3>
+      <div id="tree" class="tree"></div>
+    </div>
+  </section>
+
+  <!-- COMPARE -->
+  <section id="compareTab" class="hidden">
+    <div class="tool-panel">
+      <h3>Compare JSON documents</h3>
+      <div class="tool-grid">
+        <div class="field">
+          <label for="compareA">JSON A</label>
+          <textarea id="compareA" class="tool-input"></textarea>
+        </div>
+        <div class="field">
+          <label for="compareB">JSON B</label>
+          <textarea id="compareB" class="tool-input"></textarea>
+        </div>
+      </div>
+      <div class="button-row">
+        <button class="primary" id="compareBtn">Compare documents</button>
+        <button id="loadCompareBtn">Use editor input/output</button>
+      </div>
+      <div id="compareResult" class="result"></div>
+    </div>
+  </section>
+
+  <!-- CONVERSION -->
+  <section id="convertTab" class="hidden">
+    <div class="tool-grid">
+      <div class="tool-panel">
+        <h3>JSON to CSV</h3>
+        <p class="small">Works best with an array of objects.</p>
+        <div class="button-row">
+          <button class="primary" id="csvBtn">Convert to CSV</button>
+          <button id="copyCsvBtn">Copy CSV</button>
+          <button id="downloadCsvBtn">Download CSV</button>
+        </div>
+        <div id="csvResult" class="result"></div>
+      </div>
+      <div class="tool-panel">
+        <h3>Quick transformations</h3>
+        <div class="button-row">
+          <button id="keysBtn">Object → Keys</button>
+          <button id="valuesBtn">Object → Values</button>
+          <button id="linesBtn">JSON → JSON Lines</button>
+          <button id="linesArrayBtn">JSON Lines → Array</button>
+        </div>
+        <p class="small">Results are written to the main output panel.</p>
+        <div id="transformResult" class="result">Choose a transformation.</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>Standalone utility · Runs locally in your browser · Ctrl/Cmd + Enter to format</footer>
+
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+const input = $("input");
+const output = $("output");
+
+function status(message, kind = "") {
+  $("status").textContent = message;
+  $("status").className = "status " + kind;
+}
+function stats() {
+  $("inputStats").textContent = input.value.length.toLocaleString() + " characters";
+  $("outputStats").textContent = output.value.length.toLocaleString() + " characters";
+}
+function parseSource() {
+  try {
+    return JSON.parse(input.value);
+  } catch (error) {
+    status("Invalid JSON: " + error.message, "bad");
+    throw error;
+  }
+}
+function setOutput(value, message = "Done") {
+  output.value = value;
+  stats();
+  status(message, "ok");
+}
+function format() {
+  try { setOutput(JSON.stringify(parseSource(), null, 2), "Valid JSON · formatted"); }
+  catch (_) {}
+}
+function minify() {
+  try { setOutput(JSON.stringify(parseSource()), "Valid JSON · minified"); }
+  catch (_) {}
+}
+function validate() {
+  try {
+    const value = parseSource();
+    let description = Array.isArray(value) ? `array · ${value.length} items`
+      : value === null ? "null" : typeof value;
+    if (value && typeof value === "object" && !Array.isArray(value))
+      description = `object · ${Object.keys(value).length} keys`;
+    status("✓ Valid JSON · " + description, "ok");
+  } catch (_) {}
+}
+function sortDeep(value) {
+  if (Array.isArray(value)) return value.map(sortDeep);
+  if (value && typeof value === "object") {
+    return Object.keys(value).sort().reduce((result, key) => {
+      result[key] = sortDeep(value[key]);
+      return result;
+    }, {});
+  }
+  return value;
+}
+function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext)
+    return navigator.clipboard.writeText(text);
+  const el = document.createElement("textarea");
+  el.value = text;
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand("copy");
+  el.remove();
+  return Promise.resolve();
+}
+function download(name, text, type = "application/json") {
+  const blob = new Blob([text], {type});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+$("formatBtn").onclick = format;
+$("minifyBtn").onclick = minify;
+$("validateBtn").onclick = validate;
+$("sortBtn").onclick = () => {
+  try { setOutput(JSON.stringify(sortDeep(parseSource()), null, 2), "Keys sorted"); }
+  catch (_) {}
+};
+$("repairBtn").onclick = () => {
+  const original = input.value;
+  // Conservative repairs: remove trailing commas and convert simple single-quoted strings.
+  // Always preview the repaired text before parsing it.
+  const repaired = original
+    .replace(/,\s*([}\]])/g, "$1")
+    .replace(/([{,]\s*)'([^'\\]*(?:\\.[^'\\]*)*)'\s*:/g, '$1"$2":')
+    .replace(/:\s*'([^'\\]*(?:\\.[^'\\]*)*)'/g, (_, value) =>
+      ":" + JSON.stringify(value));
+  try {
+    const parsed = JSON.parse(repaired);
+    setOutput(JSON.stringify(parsed, null, 2), "Repair successful · review output");
+  } catch (error) {
+    setOutput(repaired, "Repair preview · still needs manual review");
+  }
+};
+$("swapBtn").onclick = () => {
+  if (!output.value.trim()) return;
+  input.value = output.value;
+  stats();
+  status("Output copied into input");
+};
+$("clearBtn").onclick = () => {
+  input.value = "";
+  output.value = "";
+  stats();
+  status("Cleared");
+};
+$("downloadBtn").onclick = () => {
+  if (!output.value.trim()) return status("Nothing to download", "bad");
+  download("formatted.json", output.value);
+};
+$("copyBtn").onclick = () => copyText(output.value).then(() => status("Output copied", "ok"));
+$("selectOutputBtn").onclick = () => { output.focus(); output.select(); };
+$("sampleBtn").onclick = () => {
+  input.value = JSON.stringify({
+    name: "Besur",
+    version: 1,
+    enabled: true,
+    features: ["format", "validate", "escape"],
+    settings: {theme: "dark", autosave: false},
+    metadata: null
+  }, null, 2);
+  stats();
+  format();
+};
+$("pasteBtn").onclick = async () => {
+  try {
+    input.value = await navigator.clipboard.readText();
+    stats();
+    status("Pasted from clipboard", "ok");
+  } catch (_) {
+    status("Clipboard blocked · use Ctrl+V", "bad");
+  }
+};
+$("fileInput").onchange = event => {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    input.value = String(reader.result);
+    stats();
+    validate();
+  };
+  reader.readAsText(file);
+  event.target.value = "";
+};
+input.addEventListener("input", stats);
+output.addEventListener("input", stats);
+document.addEventListener("keydown", event => {
+  if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+    event.preventDefault();
+    format();
+  }
+});
+
+// Tabs
+document.querySelectorAll(".tab").forEach(button => {
+  button.onclick = () => {
+    document.querySelectorAll(".tab").forEach(tab =>
+      tab.classList.toggle("active", tab === button));
+    ["mainTab","escapeTab","inspectTab","compareTab","convertTab"].forEach(id =>
+      $(id).classList.toggle("hidden", id !== button.dataset.tab));
+    if (button.dataset.tab === "inspectTab") renderTree();
+  };
+});
+
+// Escape / unescape
+$("escapeBtn").onclick = () => {
+  $("escapeResult").textContent = JSON.stringify($("escapeInput").value).slice(1, -1);
+};
+$("unescapeBtn").onclick = () => {
+  try {
+    let text = $("escapeInput").value;
+    if (text.startsWith('"') && text.endsWith('"')) {
+      $("escapeResult").textContent = JSON.parse(text);
+    } else {
+      $("escapeResult").textContent = JSON.parse('"' + text + '"');
+    }
+  } catch (error) {
+    $("escapeResult").textContent = "Invalid escaped string: " + error.message;
+  }
+};
+$("copyEscapeBtn").onclick = () => copyText($("escapeResult").textContent);
+$("urlEncodeBtn").onclick = () => {
+  $("encodeResult").textContent = encodeURIComponent($("encodeInput").value);
+};
+$("urlDecodeBtn").onclick = () => {
+  try { $("encodeResult").textContent = decodeURIComponent($("encodeInput").value); }
+  catch (error) { $("encodeResult").textContent = "Invalid encoding: " + error.message; }
+};
+$("jsStringBtn").onclick = () => {
+  try {
+    $("encodeResult").textContent =
+      JSON.stringify(JSON.parse($("encodeInput").value));
+  } catch (error) {
+    $("encodeResult").textContent = "Invalid JSON: " + error.message;
+  }
+};
+$("copyEncodeBtn").onclick = () => copyText($("encodeResult").textContent);
+
+// JSON tree, path lookup, search
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  }[char]));
+}
+function treeNode(value, key) {
+  const prefix = key === undefined ? "" :
+    `<span class="key">${escapeHTML(key)}: </span>`;
+  if (value && typeof value === "object") {
+    const entries = Object.entries(value);
+    const label = Array.isArray(value) ? `Array(${value.length})` : `Object(${entries.length})`;
+    return `<details open><summary>${prefix}${label}</summary>` +
+      (entries.map(([k, v]) => treeNode(v, k)).join("") || "<div class='small'>Empty</div>") +
+      "</details>";
+  }
+  const cls = value === null ? "null" :
+    typeof value === "string" ? "str" :
+    typeof value === "number" ? "num" :
+    typeof value === "boolean" ? "bool" : "";
+  return `<div>${prefix}<span class="${cls}">${escapeHTML(JSON.stringify(value))}</span></div>`;
+}
+function renderTree() {
+  try {
+    $("tree").innerHTML = treeNode(parseSource());
+    $("inspectResult").textContent = "Tree loaded.";
+  } catch (_) {
+    $("tree").textContent = "";
+    $("inspectResult").textContent = "Enter valid JSON in the main editor.";
+  }
+}
+function pathValue(value, path) {
+  const parts = path
+    .replace(/\[(\d+)\]/g, ".$1")
+    .replace(/\[['"]([^'"]+)['"]\]/g, ".$1")
+    .split(".").filter(Boolean);
+  return parts.reduce((current, key) => {
+    if (current == null || !(key in Object(current)))
+      throw Error("Path not found at: " + key);
+    return current[key];
+  }, value);
+}
+$("pathBtn").onclick = () => {
+  try {
+    const result = pathValue(parseSource(), $("pathInput").value.trim());
+    $("inspectResult").textContent = JSON.stringify(result, null, 2);
+  } catch (error) { $("inspectResult").textContent = error.message; }
+};
+$("searchBtn").onclick = () => {
+  try {
+    const root = parseSource();
+    const query = $("searchInput").value.toLowerCase();
+    const hits = [];
+    function walk(value, path = "$") {
+      if (value && typeof value === "object") {
+        for (const [key, child] of Object.entries(value)) {
+          const next = Array.isArray(value) ? `${path}[${key}]` : `${path}.${key}`;
+          if (key.toLowerCase().includes(query) ||
+              (typeof child !== "object" && String(child).toLowerCase().includes(query))) {
+            hits.push(`${next} = ${JSON.stringify(child)}`);
+          }
+          walk(child, next);
+        }
+      }
+    }
+    walk(root);
+    $("inspectResult").textContent = hits.join("\n") || "No matches.";
+  } catch (_) { $("inspectResult").textContent = "Enter valid JSON first."; }
+};
+
+// Deep comparison
+function compareDeep(a, b, path = "$", differences = []) {
+  if (a === null || b === null || typeof a !== typeof b ||
+      Array.isArray(a) !== Array.isArray(b)) {
+    if (JSON.stringify(a) !== JSON.stringify(b))
+      differences.push({path, a, b});
+    return differences;
+  }
+  if (a && typeof a === "object") {
+    const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+    for (const key of keys) {
+      const next = Array.isArray(a) ? `${path}[${key}]` : `${path}.${key}`;
+      if (!(key in a)) differences.push({path: next, a: "(missing)", b: b[key]});
+      else if (!(key in b)) differences.push({path: next, a: a[key], b: "(missing)"});
+      else compareDeep(a[key], b[key], next, differences);
+    }
+  } else if (a !== b) {
+    differences.push({path, a, b});
+  }
+  return differences;
+}
+$("loadCompareBtn").onclick = () => {
+  $("compareA").value = input.value;
+  $("compareB").value = output.value;
+};
+$("compareBtn").onclick = () => {
+  try {
+    const a = JSON.parse($("compareA").value);
+    const b = JSON.parse($("compareB").value);
+    const differences = compareDeep(a, b);
+    $("compareResult").textContent = differences.length
+      ? differences.map(d => `${d.path}\n  A: ${JSON.stringify(d.a)}\n  B: ${JSON.stringify(d.b)}`).join("\n\n")
+      : "No differences found.";
+  } catch (error) {
+    $("compareResult").textContent = "Invalid JSON: " + error.message;
+  }
+};
+
+// CSV conversion
+function csvCell(value) {
+  const text = value == null ? "" :
+    typeof value === "object" ? JSON.stringify(value) : String(value);
+  return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+}
+function toCSV(value) {
+  if (!Array.isArray(value)) throw Error("Input must be an array of objects.");
+  const keys = [...new Set(value.flatMap(row =>
+    row && typeof row === "object" ? Object.keys(row) : []))];
+  if (!keys.length) throw Error("No object keys found.");
+  return [
+    keys.map(csvCell).join(","),
+    ...value.map(row => keys.map(key => csvCell(row && row[key])).join(","))
+  ].join("\r\n");
+}
+$("csvBtn").onclick = () => {
+  try { $("csvResult").textContent = toCSV(parseSource()); }
+  catch (error) { $("csvResult").textContent = error.message; }
+};
+$("copyCsvBtn").onclick = () => copyText($("csvResult").textContent);
+$("downloadCsvBtn").onclick = () => {
+  download("converted.csv", $("csvResult").textContent, "text/csv;charset=utf-8");
+};
+
+// Transformations
+function transform(fn, message) {
+  try {
+    setOutput(JSON.stringify(fn(parseSource()), null, 2), message);
+    $("transformResult").textContent = message;
+  } catch (error) {
+    $("transformResult").textContent = error.message;
+  }
+}
+$("keysBtn").onclick = () => transform(value => {
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    throw Error("Input must be an object.");
+  return Object.keys(value);
+}, "Converted object keys to an array.");
+$("valuesBtn").onclick = () => transform(value => {
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    throw Error("Input must be an object.");
+  return Object.values(value);
+}, "Converted object values to an array.");
+$("linesBtn").onclick = () => {
+  try {
+    const value = parseSource();
+    const array = Array.isArray(value) ? value : [value];
+    setOutput(array.map(item => JSON.stringify(item)).join("\n"), "Converted to JSON Lines");
+    $("transformResult").textContent = "One JSON value per line.";
+  } catch (_) {}
+};
+$("linesArrayBtn").onclick = () => {
+  try {
+    const array = input.value.split(/\r?\n/).filter(line => line.trim())
+      .map(line => JSON.parse(line));
+    setOutput(JSON.stringify(array, null, 2), "JSON Lines converted to array");
+    $("transformResult").textContent = "Converted JSON Lines to an array.";
+  } catch (error) {
+    $("transformResult").textContent = "Invalid JSON Lines: " + error.message;
+  }
+};
+
+stats();
+</script>
+</body>
+</html>
